@@ -25,6 +25,7 @@ import { Link } from "react-router-dom";
 import ContactForm from "../../components/contact/ContactForm";
 import Glass from "../../components/ui/Glass";
 import "../../components/ui/Glass.css";
+import { PortfolioSkeleton } from "../../components/ui/Skeleton";
 import Seo from "../../components/seo/Seo";
 import { personJsonLd, websiteJsonLd } from "../../lib/seo";
 
@@ -188,11 +189,10 @@ function Home() {
         ];
 
   const categoryTabs = useMemo(() => {
-    const base = ["featured", "react", "api", "static"];
     const fromDb = portfolioDB
       .map((p) => String(p.category || "").trim().toLowerCase())
       .filter(Boolean);
-    const customStored = (() => {
+    const stored = (() => {
       try {
         const raw = localStorage.getItem("portfolio_project_categories");
         const parsed = raw ? JSON.parse(raw) : [];
@@ -203,15 +203,16 @@ function Home() {
         return [];
       }
     })();
-    const all = Array.from(new Set([...base, ...fromDb, ...customStored]));
-    // Faqat loyihasi bor yoki default tablar
-    return all.filter(
-      (c) =>
-        base.includes(c) ||
-        portfolioDB.some(
-          (p) => String(p.category || "").trim().toLowerCase() === c
-        )
+    // Faqat haqiqiy ishlatiladigan / saqlangan kategoriyalar
+    const all = Array.from(new Set([...stored, ...fromDb]));
+    if (!all.length) return ["featured"];
+    // Avval loyihasi borlar, keyin qolgani
+    const withProjects = all.filter((c) =>
+      portfolioDB.some(
+        (p) => String(p.category || "").trim().toLowerCase() === c
+      )
     );
+    return withProjects.length ? withProjects : all;
   }, [portfolioDB]);
 
   useEffect(() => {
@@ -573,17 +574,14 @@ function Home() {
             </motion.div>
 
             <div className="porfolioBlock">
-              {projectsLoading && (
-                <p className="projectInfo lead" style={{ width: "100%" }}>
-                  {t.portfolio.loading}
-                </p>
-              )}
+              {projectsLoading && <PortfolioSkeleton count={3} />}
               {!projectsLoading && filtered.length === 0 && (
                 <p className="projectInfo lead" style={{ width: "100%" }}>
                   {t.portfolio.empty}
                 </p>
               )}
-              {filtered.map((item) => (
+              {!projectsLoading &&
+                filtered.map((item) => (
                 <div key={item.id} className="portfolio-cell">
                   <Glass className="lg-portfolio" borderRadius={20}>
                     <article className="portfolioBox portfolioBox-inner">

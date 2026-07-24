@@ -6,6 +6,7 @@ import { fetchBlogs } from "../../lib/blogs";
 import { useLang } from "../../i18n/LanguageContext";
 import Glass from "../../components/ui/Glass";
 import "../../components/ui/Glass.css";
+import { BlogSkeleton } from "../../components/ui/Skeleton";
 import Seo from "../../components/seo/Seo";
 import "./Blog.css";
 
@@ -86,68 +87,70 @@ function Blog() {
 
       <section className="blog-list-section">
         <div className="container">
-          {loading && <p className="blog-empty">{b.loading}</p>}
+          {loading && <BlogSkeleton count={3} />}
           {!loading && posts.length === 0 && (
             <p className="blog-empty">{b.empty}</p>
           )}
 
-          <div className="blog-grid">
-            {posts.map((post, i) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.15 }}
-                transition={{ duration: 0.7, delay: (i % 6) * 0.06, ease }}
-              >
-                <Glass className="lg-portfolio" borderRadius={20} blur={0.5}>
-                  <article className="blog-card">
-                    <Link
-                      to={`/blog/${post.slug || post.id}`}
-                      className="blog-card-media"
-                    >
-                      {post.img ? (
-                        <img src={post.img} alt={post.title} loading="lazy" />
-                      ) : (
-                        <div className="blog-card-placeholder" />
-                      )}
-                    </Link>
-                    <div className="blog-card-body">
-                      <time className="blog-card-date">
-                        {formatDate(post.created_at, locale)}
-                      </time>
-                      <h2 className="blog-card-title">
-                        <Link to={`/blog/${post.slug || post.id}`}>
-                          {post.title}
-                        </Link>
-                      </h2>
-                      {post.excerpt && (
-                        <p className="blog-card-excerpt">{post.excerpt}</p>
-                      )}
-                      <div className="blog-card-actions">
-                        <Link
-                          to={`/blog/${post.slug || post.id}`}
-                          className="blog-read"
-                        >
-                          {b.readMore} <LuArrowRight />
-                        </Link>
-                        {post.link && (
-                          <a
-                            href={post.link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="blog-ext"
-                          >
-                            <LuExternalLink /> {b.external}
-                          </a>
+          {!loading && (
+            <div className="blog-grid">
+              {posts.map((post, i) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 28 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={{ duration: 0.7, delay: (i % 6) * 0.06, ease }}
+                >
+                  <Glass className="lg-portfolio" borderRadius={20} blur={0.5}>
+                    <article className="blog-card">
+                      <Link
+                        to={`/blog/${post.slug || post.id}`}
+                        className="blog-card-media"
+                      >
+                        {post.img ? (
+                          <img src={post.img} alt={post.title} loading="lazy" />
+                        ) : (
+                          <div className="blog-card-placeholder" />
                         )}
+                      </Link>
+                      <div className="blog-card-body">
+                        <time className="blog-card-date">
+                          {formatDate(post.created_at, locale)}
+                        </time>
+                        <h2 className="blog-card-title">
+                          <Link to={`/blog/${post.slug || post.id}`}>
+                            {post.title}
+                          </Link>
+                        </h2>
+                        {post.excerpt && (
+                          <p className="blog-card-excerpt">{post.excerpt}</p>
+                        )}
+                        <div className="blog-card-actions">
+                          <Link
+                            to={`/blog/${post.slug || post.id}`}
+                            className="blog-read"
+                          >
+                            {b.readMore} <LuArrowRight />
+                          </Link>
+                          {post.link && (
+                            <a
+                              href={post.link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="blog-ext"
+                            >
+                              <LuExternalLink /> {b.external}
+                            </a>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  </article>
-                </Glass>
-              </motion.div>
-            ))}
-          </div>
+                    </article>
+                  </Glass>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>

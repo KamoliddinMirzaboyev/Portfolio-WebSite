@@ -6,6 +6,7 @@ import { fetchBlogBySlugOrId } from "../../lib/blogs";
 import { useLang } from "../../i18n/LanguageContext";
 import Seo from "../../components/seo/Seo";
 import { blogPostJsonLd } from "../../lib/seo";
+import { DetailSkeleton } from "../../components/ui/Skeleton";
 import "./Blog.css";
 
 const ease = [0.16, 1, 0.3, 1];
@@ -48,8 +49,8 @@ function BlogPost() {
     return (
       <div className="blogPage blog-post-page">
         <Seo title="Blog" path={`/blog/${slug || ""}`} noindex />
-        <div className="container">
-          <p className="blog-empty">{b.loading}</p>
+        <div className="container blog-article">
+          <DetailSkeleton />
         </div>
       </div>
     );

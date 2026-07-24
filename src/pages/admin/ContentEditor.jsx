@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   CONTENT_SECTIONS,
   fetchSiteContent,
   getDefaultSiteContent,
+  resetSiteSection,
   saveSiteSection,
 } from "../../lib/siteContent";
+import { AdminFormSkeleton } from "../../components/ui/Skeleton";
+import { toastAuto, toastError, toastSuccess } from "../../lib/toast";
 
 function Field({ label, children, full }) {
   return (
@@ -20,52 +23,139 @@ function ContentEditor({ onMessage }) {
   const [content, setContent] = useState(() => getDefaultSiteContent());
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [dirty, setDirty] = useState(false);
+
+  const flash = useCallback(
+    (msg, type) => {
+      if (!msg) return;
+      if (type === "success") toastSuccess(msg);
+      else if (type === "error") toastError(msg);
+      else toastAuto(msg);
+      onMessage?.(msg, type);
+    },
+    [onMessage]
+  );
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await fetchSiteContent();
+      setContent(data);
+      setDirty(false);
+    } catch (err) {
+      flash(err.message || "Kontent yuklanmadi", "error");
+    } finally {
+      setLoading(false);
+    }
+  }, [flash]);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      const data = await fetchSiteContent();
-      if (!cancelled) {
-        setContent(data);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    load();
+  }, [load]);
 
   const data = content[section] || {};
 
   const setSectionData = (next) => {
     setContent((c) => ({ ...c, [section]: next }));
+    setDirty(true);
   };
 
   const patch = (key, value) => {
     setSectionData({ ...data, [key]: value });
   };
 
+  const updateItem = (index, field, value) => {
+    const items = [...(data.items || [])];
+    items[index] = { ...items[index], [field]: value };
+    patch("items", items);
+  };
+
+  const removeItem = (index) => {
+    const items = (data.items || []).filter((_, j) => j !== index);
+    patch("items", items);
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      await saveSiteSection(section, content[section]);
-      onMessage?.(`«${section}» saqlandi`);
+      // eng yangi state
+      let payload;
+      setContent((c) => {
+        payload = c[section];
+        return c;
+      });
+      // setState async — shu renderdagi content ishonchliroq
+      payload = content[section];
+      const result = await saveSiteSection(section, payload);
+      setDirty(false);
+      const label =
+        CONTENT_SECTIONS.find((s) => s.key === section)?.label || section;
+      if (result.source === "local") {
+        flash(
+          `«${label}» local saqlandi. Sayt shu brauzerda ko'rinadi.`,
+          "success"
+        );
+      } else {
+        flash(`«${label}» saqlandi`, "success");
+      }
+      const fresh = await fetchSiteContent();
+      setContent(fresh);
     } catch (err) {
-      onMessage?.(err.message || "Saqlash xatosi");
+      if (err.localSaved) {
+        setDirty(false);
+        flash(
+          `${err.message} Local nusxa saqlandi.`,
+          "error"
+        );
+      } else {
+        flash(err.message || "Saqlash xatosi", "error");
+      }
     } finally {
       setSaving(false);
     }
   };
 
-  const handleResetSection = () => {
-    const def = getDefaultSiteContent()[section];
-    setSectionData(def);
-    onMessage?.("Bo'lim defaultga qaytarildi (hali saqlanmagan)");
+  const handleResetSection = async () => {
+    if (
+      !window.confirm(
+        "Bu bo'lim default qiymatlarga qaytarilsinmi? Hozirgi o'zgarishlar o'chadi."
+      )
+    ) {
+      return;
+    }
+    setSaving(true);
+    try {
+      const def = getDefaultSiteContent()[section];
+      setSectionData(def);
+      await resetSiteSection(section);
+      setDirty(false);
+      flash("Bo'lim defaultga qaytarildi va saqlandi", "success");
+      const fresh = await fetchSiteContent();
+      setContent(fresh);
+    } catch (err) {
+      flash(err.message || "Defaultga qaytarish xatosi", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const switchSection = (key) => {
+    if (dirty) {
+      const ok = window.confirm(
+        "Saqlanmagan o'zgarishlar bor. Boshqa bo'limga o'tasizmi?"
+      );
+      if (!ok) return;
+    }
+    setSection(key);
+    setDirty(false);
   };
 
   if (loading) {
-    return <p className="admin-muted">Kontent yuklanmoqda…</p>;
+    return (
+      <div className="admin-card">
+        <AdminFormSkeleton />
+      </div>
+    );
   }
 
   return (
@@ -76,7 +166,7 @@ function ContentEditor({ onMessage }) {
             key={s.key}
             type="button"
             className={`admin-chip-tab ${section === s.key ? "active" : ""}`}
-            onClick={() => setSection(s.key)}
+            onClick={() => switchSection(s.key)}
           >
             {s.label}
           </button>
@@ -87,12 +177,14 @@ function ContentEditor({ onMessage }) {
         <div className="admin-card-head">
           <h2>
             {CONTENT_SECTIONS.find((s) => s.key === section)?.label || section}
+            {dirty ? " ·" : ""}
           </h2>
           <div className="admin-form-actions" style={{ margin: 0 }}>
             <button
               type="button"
               className="admin-btn ghost sm"
               onClick={handleResetSection}
+              disabled={saving}
             >
               Default
             </button>
@@ -290,12 +382,7 @@ function ContentEditor({ onMessage }) {
                   <button
                     type="button"
                     className="admin-btn danger sm"
-                    onClick={() =>
-                      patch(
-                        "items",
-                        (data.items || []).filter((_, j) => j !== i)
-                      )
-                    }
+                    onClick={() => removeItem(i)}
                   >
                     O&apos;chirish
                   </button>
@@ -304,48 +391,37 @@ function ContentEditor({ onMessage }) {
                   <Field label="Lavozim">
                     <input
                       value={item.role || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], role: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "role", e.target.value)}
                     />
                   </Field>
                   <Field label="Davr">
                     <input
                       value={item.period || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], period: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "period", e.target.value)}
                     />
                   </Field>
                   <Field label="Kompaniya" full>
                     <input
                       value={item.company || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], company: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) =>
+                        updateItem(i, "company", e.target.value)
+                      }
                     />
                   </Field>
                   <Field label="Bandlar (har qator = 1 punkt)" full>
                     <textarea
                       rows={3}
                       value={(item.points || []).join("\n")}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = {
-                          ...items[i],
-                          points: e.target.value
+                      onChange={(e) =>
+                        updateItem(
+                          i,
+                          "points",
+                          e.target.value
                             .split("\n")
                             .map((s) => s.trim())
-                            .filter(Boolean),
-                        };
-                        patch("items", items);
-                      }}
+                            .filter(Boolean)
+                        )
+                      }
                     />
                   </Field>
                 </div>
@@ -389,12 +465,7 @@ function ContentEditor({ onMessage }) {
                   <button
                     type="button"
                     className="admin-btn danger sm"
-                    onClick={() =>
-                      patch(
-                        "items",
-                        (data.items || []).filter((_, j) => j !== i)
-                      )
-                    }
+                    onClick={() => removeItem(i)}
                   >
                     O&apos;chirish
                   </button>
@@ -403,21 +474,13 @@ function ContentEditor({ onMessage }) {
                   <Field label="Guruh nomi">
                     <input
                       value={item.title || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], title: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "title", e.target.value)}
                     />
                   </Field>
                   <Field label="Elementlar (vergul)">
                     <input
                       value={item.items || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], items: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "items", e.target.value)}
                     />
                   </Field>
                 </div>
@@ -454,6 +517,11 @@ function ContentEditor({ onMessage }) {
                 />
               </Field>
             </div>
+            {(data.items || []).length === 0 && (
+              <p className="admin-muted">
+                Hali ta&apos;lim yo&apos;q. Pastdan qo&apos;shing.
+              </p>
+            )}
             {(data.items || []).map((item, i) => (
               <div className="admin-nested-card" key={i}>
                 <div className="admin-card-head">
@@ -461,12 +529,7 @@ function ContentEditor({ onMessage }) {
                   <button
                     type="button"
                     className="admin-btn danger sm"
-                    onClick={() =>
-                      patch(
-                        "items",
-                        (data.items || []).filter((_, j) => j !== i)
-                      )
-                    }
+                    onClick={() => removeItem(i)}
                   >
                     O&apos;chirish
                   </button>
@@ -475,41 +538,25 @@ function ContentEditor({ onMessage }) {
                   <Field label="Joy / OTM">
                     <input
                       value={item.place || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], place: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "place", e.target.value)}
                     />
                   </Field>
                   <Field label="Davr">
                     <input
                       value={item.period || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], period: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "period", e.target.value)}
                     />
                   </Field>
                   <Field label="Daraja / kurs" full>
                     <input
                       value={item.degree || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], degree: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "degree", e.target.value)}
                     />
                   </Field>
                   <Field label="Meta (joy, GPA…)" full>
                     <input
                       value={item.meta || ""}
-                      onChange={(e) => {
-                        const items = [...(data.items || [])];
-                        items[i] = { ...items[i], meta: e.target.value };
-                        patch("items", items);
-                      }}
+                      onChange={(e) => updateItem(i, "meta", e.target.value)}
                     />
                   </Field>
                 </div>
@@ -561,13 +608,22 @@ function ContentEditor({ onMessage }) {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? "Saqlanmoqda…" : "Bo'limni saqlash"}
+            {saving ? "Saqlanmoqda…" : dirty ? "Saqlash *" : "Saqlash"}
+          </button>
+          <button
+            type="button"
+            className="admin-btn ghost"
+            onClick={load}
+            disabled={saving}
+          >
+            Yangilash
           </button>
         </div>
       </div>
 
       <p className="admin-muted">
-        SQL bir marta: <code>supabase/site_content.sql</code>
+        O&apos;zgartirishdan keyin <strong>Saqlash</strong> bosing. SQL:{" "}
+        <code>supabase/site_content.sql</code>
       </p>
     </div>
   );

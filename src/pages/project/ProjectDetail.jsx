@@ -11,6 +11,7 @@ import Glass from "../../components/ui/Glass";
 import "../../components/ui/Glass.css";
 import Seo from "../../components/seo/Seo";
 import { projectJsonLd } from "../../lib/seo";
+import { DetailSkeleton } from "../../components/ui/Skeleton";
 import "./ProjectDetail.css";
 
 const ease = [0.16, 1, 0.3, 1];
@@ -59,8 +60,8 @@ function ProjectDetail() {
     return (
       <div className="projectPage">
         <Seo title="Loyiha" path={`/project/${slug || ""}`} noindex />
-        <div className="container">
-          <p className="project-empty">{p.loading}</p>
+        <div className="container project-layout">
+          <DetailSkeleton />
         </div>
       </div>
     );

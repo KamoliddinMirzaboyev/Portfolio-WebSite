@@ -2,6 +2,7 @@ import { supabase, isSupabaseConfigured } from "./supabase";
 import { translations } from "../i18n/translations";
 
 const uz = translations.uz;
+const LOCAL_STORAGE_KEY = "portfolio_site_content_v1";
 
 /** Default kontent — tarjimalardan (uz) */
 export function getDefaultSiteContent() {
@@ -83,105 +84,172 @@ export const CONTENT_SECTIONS = [
   { key: "contact_meta", label: "Aloqa sarlavha" },
 ];
 
-function deepMerge(base, overlay) {
-  if (!overlay || typeof overlay !== "object") return base;
-  const out = Array.isArray(base) ? [...base] : { ...base };
-  for (const [k, v] of Object.entries(overlay)) {
-    if (
-      v &&
-      typeof v === "object" &&
-      !Array.isArray(v) &&
-      base?.[k] &&
-      typeof base[k] === "object" &&
-      !Array.isArray(base[k])
+/**
+ * Saqlangan bo'lim + default.
+ * Array maydonlar (items/stats/tags) — saqlangan qiymat to'liq ustun:
+ * o'chirilgan elementlar qayta default dan chiqmasin.
+ */
+export function mergeSection(defaults, saved) {
+  if (!saved || typeof saved !== "object" || Array.isArray(saved)) {
+    return structuredClone(defaults);
+  }
+  const base = structuredClone(defaults || {});
+  const out = { ...base, ...saved };
+
+  for (const key of Object.keys(out)) {
+    if (Array.isArray(saved[key])) {
+      out[key] = saved[key].map((item) =>
+        item && typeof item === "object" && !Array.isArray(item)
+          ? { ...item }
+          : item
+      );
+    } else if (
+      saved[key] &&
+      typeof saved[key] === "object" &&
+      !Array.isArray(saved[key]) &&
+      base[key] &&
+      typeof base[key] === "object" &&
+      !Array.isArray(base[key])
     ) {
-      out[k] = deepMerge(base[k], v);
-    } else if (v !== undefined && v !== null) {
-      out[k] = v;
+      out[key] = { ...base[key], ...saved[key] };
     }
   }
   return out;
 }
 
-/** Barcha bo'limlarni o'qiydi, default bilan birlashtiradi */
-export async function fetchSiteContent() {
-  const defaults = getDefaultSiteContent();
-  if (!isSupabaseConfigured || !supabase) {
-    return defaults;
-  }
-
+function readLocalCache() {
   try {
-    const { data, error } = await supabase.from("site_content").select("key, value");
-    if (error) {
-      // jadval yo'q bo'lsa default
-      return defaults;
-    }
-    const map = { ...defaults };
-    for (const row of data || []) {
-      if (row.key && row.value && defaults[row.key] !== undefined) {
-        map[row.key] = deepMerge(defaults[row.key], row.value);
-      } else if (row.key && row.value) {
-        map[row.key] = row.value;
-      }
-    }
-    return map;
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : null;
   } catch {
-    return defaults;
+    return null;
   }
 }
 
-export async function fetchSiteSection(key) {
+function writeLocalCache(map) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    /* quota */
+  }
+}
+
+function mergeAll(defaults, overlay) {
+  const map = structuredClone(defaults);
+  if (!overlay || typeof overlay !== "object") return map;
+  for (const key of Object.keys(defaults)) {
+    if (overlay[key] != null) {
+      map[key] = mergeSection(defaults[key], overlay[key]);
+    }
+  }
+  return map;
+}
+
+function isTableMissing(error) {
+  const msg = (error?.message || "").toLowerCase();
+  return (
+    msg.includes("schema cache") ||
+    msg.includes("does not exist") ||
+    msg.includes("could not find the table") ||
+    error?.code === "42P01" ||
+    error?.code === "PGRST205"
+  );
+}
+
+function friendlyError(error) {
+  const msg = String(error?.message || error || "");
+  if (/failed to fetch|networkerror|network/i.test(msg)) {
+    return "Tarmoq xatosi. Internet yoki Supabase URL ni tekshiring.";
+  }
+  if (isTableMissing(error)) {
+    return "site_content jadvali yo'q. Supabase SQL: supabase/site_content.sql";
+  }
+  return msg || "Noma'lum xato";
+}
+
+/** Barcha bo'limlarni o'qiydi */
+export async function fetchSiteContent() {
   const defaults = getDefaultSiteContent();
-  const fallback = defaults[key] || {};
-  if (!isSupabaseConfigured || !supabase) return fallback;
+  const local = readLocalCache();
+
+  if (!isSupabaseConfigured || !supabase) {
+    return local ? mergeAll(defaults, local) : defaults;
+  }
 
   try {
     const { data, error } = await supabase
       .from("site_content")
-      .select("value")
-      .eq("key", key)
-      .maybeSingle();
-    if (error || !data?.value) return fallback;
-    return deepMerge(fallback, data.value);
+      .select("key, value");
+
+    if (error) {
+      if (local) return mergeAll(defaults, local);
+      return defaults;
+    }
+
+    const overlay = {};
+    for (const row of data || []) {
+      if (row?.key && row.value != null) {
+        overlay[row.key] =
+          typeof row.value === "string"
+            ? JSON.parse(row.value)
+            : row.value;
+      }
+    }
+    const merged = mergeAll(defaults, overlay);
+    // remote muvaffaqiyatli — local cache sync
+    writeLocalCache(
+      Object.fromEntries(
+        Object.keys(defaults).map((k) => [k, merged[k]])
+      )
+    );
+    return merged;
   } catch {
-    return fallback;
+    return local ? mergeAll(defaults, local) : defaults;
   }
 }
 
-/** Bitta bo'limni saqlash (upsert) */
+/** Bitta bo'limni saqlash (Supabase + local) */
 export async function saveSiteSection(key, value) {
+  const clean = structuredClone(value ?? {});
+
+  // Avval local — hech bo'lmaganda saqlansin
+  const defaults = getDefaultSiteContent();
+  const local = readLocalCache() || {};
+  local[key] = clean;
+  writeLocalCache(local);
+
   if (!isSupabaseConfigured || !supabase) {
-    throw new Error("Supabase sozlanmagan");
+    // local-only rejim
+    return { ok: true, source: "local" };
   }
 
   const { error } = await supabase.from("site_content").upsert(
     {
       key,
-      value,
+      value: clean,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "key" }
   );
 
   if (error) {
-    const msg = (error.message || "").toLowerCase();
-    if (
-      msg.includes("schema cache") ||
-      msg.includes("does not exist") ||
-      msg.includes("could not find the table")
-    ) {
-      throw new Error(
-        "site_content jadvali yo'q. Supabase SQL: supabase/site_content.sql ni ishga tushiring."
-      );
-    }
-    throw error;
+    const err = new Error(friendlyError(error));
+    err.cause = error;
+    // local saqlangan — foydalanuvchiga ham aytamiz
+    err.localSaved = true;
+    throw err;
   }
-  return true;
+
+  return { ok: true, source: "remote" };
 }
 
-export async function saveAllSiteContent(content) {
-  const keys = Object.keys(content || {});
-  for (const key of keys) {
-    await saveSiteSection(key, content[key]);
-  }
+/** Defaultga qaytarib saqlash */
+export async function resetSiteSection(key) {
+  const def = getDefaultSiteContent()[key];
+  if (!def) throw new Error("Noma'lum bo'lim");
+  return saveSiteSection(key, def);
 }
+
+export { friendlyError };

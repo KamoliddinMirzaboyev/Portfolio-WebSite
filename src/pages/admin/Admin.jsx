@@ -31,6 +31,16 @@ import {
   ADMIN_PASSWORD,
 } from "../../lib/constants";
 import Seo from "../../components/seo/Seo";
+import {
+  toastAuto,
+  toastError,
+  toastSuccess,
+} from "../../lib/toast";
+import {
+  AdminDashboardSkeleton,
+  AdminListSkeleton,
+  AuthSkeleton,
+} from "../../components/ui/Skeleton";
 import "./Admin.css";
 
 const EMPTY_PROJECT = {
@@ -104,7 +114,7 @@ function Admin() {
     () => sessionStorage.getItem(LOCAL_ADMIN_KEY) === "1"
   );
   const [authLoading, setAuthLoading] = useState(true);
-  const [loginName, setLoginName] = useState(ADMIN_LOGIN);
+  const [loginName, setLoginName] = useState("");
   const [password, setPassword] = useState("");
   const [authError, setAuthError] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
@@ -113,6 +123,22 @@ function Admin() {
   const [tab, setTab] = useState("dashboard"); // dashboard | projects | blogs | content
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [message, setMessage] = useState("");
+  const notify = (msg, type) => {
+    if (!msg) {
+      setMessage("");
+      return;
+    }
+    if (type === "success") toastSuccess(msg);
+    else if (type === "error") toastError(msg);
+    else toastAuto(msg);
+    // inline banner faqat muhim xatolar (sonner asosiy)
+    const m = String(msg).toLowerCase();
+    if (/xato|error|failed|majburiy|tekshir|ulanmadi|sql/.test(m)) {
+      setMessage(msg);
+    } else {
+      setMessage("");
+    }
+  };
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [dbReady, setDbReady] = useState(null); // null | true | false
@@ -126,7 +152,19 @@ function Admin() {
   const [galleryPreviews, setGalleryPreviews] = useState([]);
   const [categories, setCategories] = useState(() => {
     const stored = loadStoredCategories();
-    return Array.from(new Set([...DEFAULT_CATEGORIES, ...stored]));
+    let removedDefaults = [];
+    try {
+      const raw = localStorage.getItem("portfolio_removed_default_categories");
+      removedDefaults = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(removedDefaults)) removedDefaults = [];
+    } catch {
+      removedDefaults = [];
+    }
+    const defaults = DEFAULT_CATEGORIES.filter(
+      (c) => !removedDefaults.includes(c)
+    );
+    const list = Array.from(new Set([...defaults, ...stored]));
+    return list.length ? list : ["featured"];
   });
   const [newCategory, setNewCategory] = useState("");
 
@@ -209,53 +247,139 @@ function Admin() {
         .map((p) => normalizeCategorySlug(p.category))
         .filter(Boolean);
       setCategories((prev) => {
+        // o'chirilgan defaultlarni qayta tiklamaslik
+        let removedDefaults = [];
+        try {
+          const raw = localStorage.getItem(
+            "portfolio_removed_default_categories"
+          );
+          removedDefaults = raw ? JSON.parse(raw) : [];
+          if (!Array.isArray(removedDefaults)) removedDefaults = [];
+        } catch {
+          removedDefaults = [];
+        }
         const next = Array.from(
-          new Set([...DEFAULT_CATEGORIES, ...prev, ...fromProjects])
+          new Set([
+            ...prev,
+            ...fromProjects.filter((c) => !removedDefaults.includes(c)),
+          ])
         );
-        const custom = next.filter((c) => !DEFAULT_CATEGORIES.includes(c));
-        saveStoredCategories(custom);
-        return next;
+        const list = next.length ? next : ["featured"];
+        saveStoredCategories(list);
+        return list;
       });
     } catch (err) {
-      setMessage(err.message || "Loyihalar yuklash xatosi");
+      setProjects([]);
+      setDbReady(false);
+      const msg = String(err?.message || "");
+      if (/failed to fetch|network|fetch/i.test(msg)) {
+        notify(
+          "Supabase ulanmadi. Internet yoki .env (VITE_SUPABASE_URL / ANON_KEY) ni tekshiring."
+        );
+      } else {
+        notify(msg || "Loyihalar yuklash xatosi");
+      }
     } finally {
       setLoadingProjects(false);
     }
   }, []);
 
+  const persistCategories = (list) => {
+    // custom + o'chirilgan defaultlarni ham saqlaymiz
+    saveStoredCategories(list);
+    // o'chirilgan defaultlarni alohida belgilash
+    try {
+      localStorage.setItem(
+        "portfolio_removed_default_categories",
+        JSON.stringify(DEFAULT_CATEGORIES.filter((c) => !list.includes(c)))
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
   const addCategory = () => {
     const slug = normalizeCategorySlug(newCategory);
     if (!slug) {
-      setMessage("Kategoriya nomini yozing");
+      notify("Kategoriya nomini yozing");
       return;
     }
     if (categories.includes(slug)) {
       setProjectForm((f) => ({ ...f, category: slug }));
       setNewCategory("");
-      setMessage(`«${slug}» allaqachon bor — tanlandi`);
+      notify(`«${slug}» allaqachon bor — tanlandi`);
       return;
     }
     setCategories((prev) => {
       const next = [...prev, slug];
-      const custom = next.filter((c) => !DEFAULT_CATEGORIES.includes(c));
-      saveStoredCategories(custom);
+      persistCategories(next);
       return next;
     });
     setProjectForm((f) => ({ ...f, category: slug }));
     setNewCategory("");
-    setMessage(`Kategoriya qo'shildi: ${slug}`);
+    notify(`Kategoriya qo'shildi: ${slug}`);
   };
 
-  const removeCustomCategory = (cat) => {
-    if (DEFAULT_CATEGORIES.includes(cat)) return;
-    setCategories((prev) => {
-      const next = prev.filter((c) => c !== cat);
-      saveStoredCategories(next.filter((c) => !DEFAULT_CATEGORIES.includes(c)));
-      return next;
-    });
-    setProjectForm((f) =>
-      f.category === cat ? { ...f, category: "featured" } : f
+  const deleteCategory = async (cat) => {
+    if (!cat) return;
+    if (categories.length <= 1) {
+      notify("Kamida 1 ta kategoriya qolishi kerak");
+      return;
+    }
+
+    const used = projects.filter(
+      (p) =>
+        String(p.category || "").trim().toLowerCase() ===
+        String(cat).trim().toLowerCase()
     );
+    const fallback =
+      categories.find((c) => c !== cat) || DEFAULT_CATEGORIES[0] || "featured";
+
+    const ok = window.confirm(
+      used.length > 0
+        ? `«${cat}» o'chirilsinmi?\n${used.length} ta loyiha «${fallback}» ga o'tkaziladi.`
+        : `«${cat}» kategoriyasi o'chirilsinmi?`
+    );
+    if (!ok) return;
+
+    try {
+      if (used.length > 0 && supabase) {
+        for (const p of used) {
+          await updateProject(p.id, { ...p, category: fallback });
+        }
+      }
+
+      setCategories((prev) => {
+        const next = prev.filter((c) => c !== cat);
+        persistCategories(next);
+        return next;
+      });
+
+      setProjects((prev) =>
+        prev.map((p) =>
+          String(p.category || "").trim().toLowerCase() ===
+          String(cat).trim().toLowerCase()
+            ? { ...p, category: fallback }
+            : p
+        )
+      );
+
+      setProjectForm((f) =>
+        f.category === cat ? { ...f, category: fallback } : f
+      );
+
+      notify(
+        used.length > 0
+          ? `«${cat}» o'chirildi · ${used.length} loyiha → ${fallback}`
+          : `«${cat}» o'chirildi`
+      );
+
+      if (used.length > 0) {
+        await loadProjects();
+      }
+    } catch (err) {
+      notify(err.message || "Kategoriya o'chirish xatosi");
+    }
   };
 
   const loadBlogs = useCallback(async () => {
@@ -293,8 +417,11 @@ function Admin() {
         }))
       );
     } catch (err) {
-      setMessage(err.message || "Blog yuklash xatosi");
       setBlogs([]);
+      const msg = String(err?.message || "");
+      if (!/failed to fetch|network|fetch/i.test(msg)) {
+        notify(msg || "Blog yuklash xatosi");
+      }
     } finally {
       setLoadingBlogs(false);
     }
@@ -313,11 +440,13 @@ function Admin() {
 
     const login = loginName.trim().toLowerCase();
     if (login !== ADMIN_LOGIN) {
-      setAuthError(`Login: "${ADMIN_LOGIN}" bo'lishi kerak`);
+      setAuthError("Login yoki parol noto'g'ri");
+      toastError("Login yoki parol noto'g'ri");
       return;
     }
     if (password !== ADMIN_PASSWORD) {
-      setAuthError("Parol noto'g'ri");
+      setAuthError("Login yoki parol noto'g'ri");
+      toastError("Login yoki parol noto'g'ri");
       return;
     }
 
@@ -326,6 +455,7 @@ function Admin() {
       // Lokal kirish — rate limit bo'lsa ham panel ochiladi
       sessionStorage.setItem(LOCAL_ADMIN_KEY, "1");
       setLocalAuthed(true);
+      toastSuccess("Muvaffaqiyatli kirdingiz");
 
       // Faqat signIn (signUp YO'Q — email limit chiqarmaydi)
       if (supabase) {
@@ -334,24 +464,15 @@ function Admin() {
           password: ADMIN_PASSWORD,
         });
 
+        // Local admin ochildi — Supabase session ixtiyoriy
         if (error) {
           const msg = (error.message || "").toLowerCase();
-          let hint = error.message;
           if (msg.includes("rate limit")) {
-            hint =
-              "Supabase email limiti (30–60 daqiqa). Panel ochildi. SQL ishga tushiring: supabase/fix_rls_anon_write.sql — yoki Users → Add user: " +
-              ADMIN_AUTH_EMAIL +
-              " / kamoliddin (Auto Confirm ON).";
-          } else if (
-            msg.includes("invalid") ||
-            msg.includes("credentials")
-          ) {
-            hint =
-              "Supabase user yo'q. Users → Add user: " +
-              ADMIN_AUTH_EMAIL +
-              " / kamoliddin (Auto Confirm ON). SQL: fix_rls_anon_write.sql";
+            notify(
+              "Supabase limit. Panel local ishlaydi. SQL: fix_rls_anon_write.sql"
+            );
           }
-          setMessage(hint);
+          // invalid credentials — shovqinsiz (local session yetarli)
         }
       }
     } catch (err) {
@@ -370,6 +491,7 @@ function Admin() {
     setLocalAuthed(false);
     setProjects([]);
     setBlogs([]);
+    toastSuccess("Tizimdan chiqdingiz");
   };
 
   const parseTech = (str) =>
@@ -419,7 +541,7 @@ function Admin() {
   const handleProjectSubmit = async (e) => {
     e.preventDefault();
     if (!projectForm.name.trim()) {
-      setMessage("Nom majburiy");
+      notify("Nom majburiy");
       return;
     }
     setSaving(true);
@@ -446,15 +568,15 @@ function Admin() {
       };
       if (editingProjectId) {
         await updateProject(editingProjectId, payload);
-        setMessage("Loyiha yangilandi");
+        notify("Loyiha yangilandi");
       } else {
         await createProject(payload);
-        setMessage("Loyiha qo'shildi");
+        notify("Loyiha qo'shildi");
       }
       resetProjectForm();
       await loadProjects();
     } catch (err) {
-      setMessage(err.message || "Saqlash xatosi");
+      notify(err.message || "Saqlash xatosi");
     } finally {
       setSaving(false);
     }
@@ -466,9 +588,9 @@ function Admin() {
       await deleteProject(id);
       if (editingProjectId === id) resetProjectForm();
       await loadProjects();
-      setMessage("Loyiha o'chirildi");
+      notify("Loyiha o'chirildi");
     } catch (err) {
-      setMessage(err.message || "O'chirish xatosi");
+      notify(err.message || "O'chirish xatosi");
     }
   };
 
@@ -494,9 +616,9 @@ function Admin() {
         if (url && !prev.includes(url)) return [url, ...prev];
         return prev;
       });
-      setMessage("Asosiy rasm tayyor");
+      notify("Asosiy rasm tayyor");
     } catch (err) {
-      setMessage(err.message || "Rasm yuklash xatosi");
+      notify(err.message || "Rasm yuklash xatosi");
       setProjectPreview("");
       onProjectChange("img", "");
     } finally {
@@ -527,9 +649,9 @@ function Admin() {
       if (!projectForm.img && urls[0]) {
         setProjectPreview(urls[0]);
       }
-      setMessage(`${urls.length} ta rasm qo'shildi`);
+      notify(`${urls.length} ta rasm qo'shildi`);
     } catch (err) {
-      setMessage(err.message || "Gallery yuklash xatosi");
+      notify(err.message || "Gallery yuklash xatosi");
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -595,7 +717,7 @@ function Admin() {
   const handleBlogSubmit = async (e) => {
     e.preventDefault();
     if (!blogForm.title.trim()) {
-      setMessage("Sarlavha majburiy");
+      notify("Sarlavha majburiy");
       return;
     }
     setSaving(true);
@@ -613,15 +735,15 @@ function Admin() {
       };
       if (editingBlogId) {
         await updateBlog(editingBlogId, payload);
-        setMessage("Blog yangilandi");
+        notify("Blog yangilandi");
       } else {
         await createBlog(payload);
-        setMessage("Blog qo'shildi");
+        notify("Blog qo'shildi");
       }
       resetBlogForm();
       await loadBlogs();
     } catch (err) {
-      setMessage(err.message || "Blog saqlash xatosi");
+      notify(err.message || "Blog saqlash xatosi");
     } finally {
       setSaving(false);
     }
@@ -633,9 +755,9 @@ function Admin() {
       await deleteBlog(id);
       if (editingBlogId === id) resetBlogForm();
       await loadBlogs();
-      setMessage("Blog o'chirildi");
+      notify("Blog o'chirildi");
     } catch (err) {
-      setMessage(err.message || "O'chirish xatosi");
+      notify(err.message || "O'chirish xatosi");
     }
   };
 
@@ -650,9 +772,9 @@ function Admin() {
       const url = await uploadImageFile(file, "blog");
       onBlogChange("img", url);
       setBlogPreview(url);
-      setMessage("Blog rasmi tayyor");
+      notify("Blog rasmi tayyor");
     } catch (err) {
-      setMessage(err.message || "Rasm yuklash xatosi");
+      notify(err.message || "Rasm yuklash xatosi");
       setBlogPreview("");
       onBlogChange("img", "");
     } finally {
@@ -710,7 +832,7 @@ function Admin() {
       <div className="admin-shell admin-shell--auth">
         <Seo title="Admin" path="/admin" noindex />
         <div className="admin-auth-card">
-          <p className="admin-muted">Yuklanmoqda…</p>
+          <AuthSkeleton />
         </div>
       </div>
     );
@@ -746,10 +868,8 @@ function Admin() {
         <Seo title="Admin" path="/admin" noindex />
         <form className="admin-auth-card" onSubmit={handleLogin}>
           <div className="admin-auth-brand">KM</div>
-          <h1>Admin kirish</h1>
-          <p className="admin-muted admin-login-hint">
-            Login: <strong>admin</strong> · Parol: <strong>kamoliddin</strong>
-          </p>
+          <h1>Admin</h1>
+          <p className="admin-muted">Portfolio boshqaruv paneliga kiring</p>
           <label>
             Login
             <input
@@ -757,7 +877,7 @@ function Admin() {
               value={loginName}
               onChange={(e) => setLoginName(e.target.value)}
               autoComplete="username"
-              placeholder="admin"
+              placeholder="Login"
               required
             />
           </label>
@@ -768,14 +888,18 @@ function Admin() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="current-password"
-              placeholder="kamoliddin"
+              placeholder="••••••••"
               required
             />
           </label>
           {authError && <p className="admin-error">{authError}</p>}
           {authHint && <p className="admin-hint">{authHint}</p>}
-          <button type="submit" className="admin-btn admin-btn-block" disabled={authBusy}>
-            {authBusy ? "…" : "Kirish"}
+          <button
+            type="submit"
+            className="admin-btn admin-btn-block"
+            disabled={authBusy}
+          >
+            {authBusy ? "Kutilmoqda…" : "Kirish"}
           </button>
           <Link to="/" className="admin-auth-back">
             ← Saytga qaytish
@@ -802,9 +926,9 @@ function Admin() {
         <div className="admin-sidebar-top">
           <div className="admin-sidebar-brand">
             <span className="admin-sidebar-logo">KM</span>
-            <div>
-              <strong>Admin</strong>
-              <span>Portfolio CMS</span>
+            <div className="admin-sidebar-brand-text">
+              <strong>Portfolio</strong>
+              <span>Admin</span>
             </div>
           </div>
           <button
@@ -818,6 +942,7 @@ function Admin() {
         </div>
 
         <nav className="admin-sidebar-nav" aria-label="Admin navigatsiya">
+          <p className="admin-nav-label">Menu</p>
           {navItems.map(({ id, label, icon: Icon, count }) => (
             <button
               key={id}
@@ -825,8 +950,10 @@ function Admin() {
               className={`admin-nav-item ${tab === id ? "active" : ""}`}
               onClick={() => goTab(id)}
             >
-              <Icon />
-              <span>{label}</span>
+              <span className="admin-nav-icon">
+                <Icon />
+              </span>
+              <span className="admin-nav-text">{label}</span>
               {typeof count === "number" && (
                 <em className="admin-nav-count">{count}</em>
               )}
@@ -835,17 +962,26 @@ function Admin() {
         </nav>
 
         <div className="admin-sidebar-foot">
-          <Link to="/" className="admin-nav-item" target="_blank" rel="noreferrer">
-            <LuGlobe />
-            <span>Saytni ochish</span>
+          <Link
+            to="/"
+            className="admin-nav-item"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <span className="admin-nav-icon">
+              <LuGlobe />
+            </span>
+            <span className="admin-nav-text">Sayt</span>
           </Link>
           <button
             type="button"
             className="admin-nav-item admin-nav-item--danger"
             onClick={handleLogout}
           >
-            <LuLogOut />
-            <span>Chiqish</span>
+            <span className="admin-nav-icon">
+              <LuLogOut />
+            </span>
+            <span className="admin-nav-text">Chiqish</span>
           </button>
         </div>
       </aside>
@@ -863,26 +999,13 @@ function Admin() {
             </button>
             <div>
               <h1>{pageTitle}</h1>
-              <p className="admin-muted">
-                {session?.user?.email || "local admin"}
-                {!session && " · local session"}
-              </p>
             </div>
           </div>
           <div className="admin-topbar-right">
-            <Link to="/blog" className="admin-btn ghost sm">
-              Blog
+            <Link to="/" className="admin-btn ghost sm" target="_blank" rel="noreferrer">
+              <LuGlobe />
+              <span>Sayt</span>
             </Link>
-            <Link to="/" className="admin-btn ghost sm" target="_blank">
-              <LuGlobe /> Sayt
-            </Link>
-            <button
-              type="button"
-              className="admin-btn ghost sm"
-              onClick={handleLogout}
-            >
-              <LuLogOut /> Chiqish
-            </button>
           </div>
         </header>
 
@@ -897,8 +1020,15 @@ function Admin() {
           )}
 
           {message && (
-            <div className="admin-toast" role="status">
-              {message}
+            <div
+              className={`admin-toast ${
+                /xato|error|yo'q|yoʻq|failed|tekshir/i.test(message)
+                  ? "admin-toast--warn"
+                  : "admin-toast--info"
+              }`}
+              role="status"
+            >
+              <span>{message}</span>
               <button
                 type="button"
                 className="admin-toast-close"
@@ -910,7 +1040,10 @@ function Admin() {
             </div>
           )}
 
-          {tab === "dashboard" && (
+          {tab === "dashboard" &&
+            (loadingProjects || loadingBlogs) && <AdminDashboardSkeleton />}
+
+          {tab === "dashboard" && !loadingProjects && !loadingBlogs && (
             <section className="admin-dashboard">
               <div className="admin-stats">
                 <button
@@ -920,7 +1053,6 @@ function Admin() {
                 >
                   <span className="admin-stat-label">Loyihalar</span>
                   <strong className="admin-stat-value">{projects.length}</strong>
-                  <span className="admin-stat-hint">Barcha portfolio</span>
                 </button>
                 <button
                   type="button"
@@ -929,7 +1061,6 @@ function Admin() {
                 >
                   <span className="admin-stat-label">Sotuvda</span>
                   <strong className="admin-stat-value">{saleCount}</strong>
-                  <span className="admin-stat-hint">for sale</span>
                 </button>
                 <button
                   type="button"
@@ -938,21 +1069,21 @@ function Admin() {
                 >
                   <span className="admin-stat-label">Bloglar</span>
                   <strong className="admin-stat-value">{blogs.length}</strong>
-                  <span className="admin-stat-hint">
-                    {publishedBlogs} nashr qilingan
-                  </span>
                 </button>
-                <div className="admin-stat-card">
-                  <span className="admin-stat-label">Kategoriyalar</span>
+                <button
+                  type="button"
+                  className="admin-stat-card"
+                  onClick={() => goTab("content")}
+                >
+                  <span className="admin-stat-label">Kategoriya</span>
                   <strong className="admin-stat-value">{categories.length}</strong>
-                  <span className="admin-stat-hint">default + custom</span>
-                </div>
+                </button>
               </div>
 
               <div className="admin-dash-grid">
                 <div className="admin-card">
                   <div className="admin-card-head">
-                    <h2>Tezkor amallar</h2>
+                    <h2>Tezkor</h2>
                   </div>
                   <div className="admin-quick-actions">
                     <button
@@ -960,25 +1091,22 @@ function Admin() {
                       className="admin-btn"
                       onClick={() => goTab("content")}
                     >
-                      Kontent tahrirlash
+                      Kontent
                     </button>
                     <button
                       type="button"
                       className="admin-btn ghost"
                       onClick={() => goTab("projects")}
                     >
-                      + Yangi loyiha
+                      + Loyiha
                     </button>
                     <button
                       type="button"
                       className="admin-btn ghost"
                       onClick={() => goTab("blogs")}
                     >
-                      + Yangi blog
+                      + Blog
                     </button>
-                    <Link to="/" className="admin-btn ghost" target="_blank">
-                      Saytni ko&apos;rish
-                    </Link>
                   </div>
                 </div>
                 <div className="admin-card">
@@ -1022,7 +1150,7 @@ function Admin() {
           )}
 
           {tab === "content" && (
-            <ContentEditor onMessage={setMessage} />
+            <ContentEditor onMessage={notify} />
           )}
 
           {tab === "projects" && (
@@ -1073,13 +1201,15 @@ function Admin() {
                   ))}
                 </select>
               </label>
-              <label className="full admin-category-add">
-                Yangi kategoriya
+              <div className="full admin-category-box">
+                <div className="admin-card-head" style={{ marginBottom: 10 }}>
+                  <h3 className="admin-category-title">Kategoriyalar</h3>
+                </div>
                 <div className="admin-category-row">
                   <input
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value)}
-                    placeholder="masalan: vue, mobile, crm"
+                    placeholder="Yangi kategoriya (vue, mobile, crm…)"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -1095,26 +1225,42 @@ function Admin() {
                     Qo&apos;shish
                   </button>
                 </div>
-                {categories.filter((c) => !DEFAULT_CATEGORIES.includes(c))
-                  .length > 0 && (
-                  <div className="admin-category-chips">
-                    {categories
-                      .filter((c) => !DEFAULT_CATEGORIES.includes(c))
-                      .map((c) => (
-                        <span key={c} className="admin-category-chip">
+                <div className="admin-category-chips">
+                  {categories.map((c) => {
+                    const count = projects.filter(
+                      (p) =>
+                        String(p.category || "").trim().toLowerCase() === c
+                    ).length;
+                    return (
+                      <span key={c} className="admin-category-chip">
+                        <button
+                          type="button"
+                          className="admin-category-chip-name"
+                          onClick={() => onProjectChange("category", c)}
+                          title="Tanlash"
+                        >
                           {c}
-                          <button
-                            type="button"
-                            aria-label={`${c} o'chirish`}
-                            onClick={() => removeCustomCategory(c)}
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                  </div>
-                )}
-              </label>
+                          {count > 0 ? ` (${count})` : ""}
+                        </button>
+                        <button
+                          type="button"
+                          className="admin-category-del"
+                          aria-label={`${c} o'chirish`}
+                          title="O'chirish"
+                          disabled={categories.length <= 1}
+                          onClick={() => deleteCategory(c)}
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+                <p className="admin-muted" style={{ marginTop: 8 }}>
+                  × — kategoriyani o&apos;chirish. Ichidagi loyihalar boshqa
+                  kategoriyaga o&apos;tadi.
+                </p>
+              </div>
               <label>
                 Tartib
                 <input
@@ -1258,11 +1404,13 @@ function Admin() {
                 {loadingProjects ? "…" : `(${projects.length})`}
               </h2>
             </div>
+            {loadingProjects && <AdminListSkeleton count={4} />}
             {projects.length === 0 && !loadingProjects && (
               <p className="admin-muted">Hali loyiha yo&apos;q.</p>
             )}
             <ul className="admin-list">
-              {projects.map((p) => (
+              {!loadingProjects &&
+                projects.map((p) => (
                 <li key={p.id} className="admin-list-item">
                   <div className="admin-list-thumb">
                     {p.img ? <img src={p.img} alt="" /> : <span>—</span>}
@@ -1419,6 +1567,7 @@ function Admin() {
                 Bloglar {loadingBlogs ? "…" : `(${blogs.length})`}
               </h2>
             </div>
+            {loadingBlogs && <AdminListSkeleton count={4} />}
             {blogs.length === 0 && !loadingBlogs && (
               <p className="admin-muted">
                 Hali blog yo&apos;q. SQL:{" "}
@@ -1426,7 +1575,8 @@ function Admin() {
               </p>
             )}
             <ul className="admin-list">
-              {blogs.map((post) => (
+              {!loadingBlogs &&
+                blogs.map((post) => (
                 <li key={post.id} className="admin-list-item">
                   <div className="admin-list-thumb">
                     {post.img ? (
