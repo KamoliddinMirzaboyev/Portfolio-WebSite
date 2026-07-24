@@ -11,62 +11,8 @@ function slugify(text) {
     .slice(0, 80) || `project-${Date.now()}`;
 }
 
-/** Static fallback when Supabase yo'q yoki bo'sh */
-export const DEFAULT_PROJECTS = [
-  {
-    id: "default-1",
-    slug: "joybor",
-    category: "featured",
-    name: "JoyBor",
-    img: "/mixel.png",
-    gallery: ["/mixel.png", "/discover.jpg"],
-    info: "Talabalar yotoqxonasini avtomatlashtirishga qaratilgan CRM tizimi.",
-    description:
-      "JoyBor — talabalar yotoqxonasi boshqaruvi uchun CRM.\n\n• Talaba qabuli va ro'yxatga olish\n• Xonalar va to'lovlar\n• Admin panel\n\nReact asosida qurilgan, real foydalanuvchilar uchun mo'ljallangan.",
-    tech: ["React", "CRM", "2025"],
-    github: "https://github.com/KamoliddinMirzaboyev",
-    live: "https://joy-bor.uz",
-    youtube_url: "",
-    price: "",
-    for_sale: true,
-    sort_order: 1,
-  },
-  {
-    id: "default-2",
-    slug: "avtomaktab",
-    category: "featured",
-    name: "Avtomaktab",
-    img: "/exclusive.jpg",
-    gallery: ["/exclusive.jpg"],
-    info: "Haydovchilik guvohnomasi uchun videodarslar va testlar platformasi.",
-    description:
-      "Avtomaktab — haydovchilik imtihoniga tayyorgarlik platformasi.\n\n• Videodarslar\n• Testlar\n• Progress tracking",
-    tech: ["React", "Video", "2026"],
-    github: "https://github.com/KamoliddinMirzaboyev",
-    live: "https://autostarts.uz",
-    youtube_url: "",
-    price: "",
-    for_sale: true,
-    sort_order: 2,
-  },
-  {
-    id: "default-3",
-    slug: "mixel-ecommerce",
-    category: "featured",
-    name: "Mixel E-Commerce",
-    img: "/discover.jpg",
-    gallery: ["/discover.jpg"],
-    info: "Online do'kon admin dashboard va e-commerce frontend.",
-    description: "To'liq e-commerce frontend va admin dashboard yechimi.",
-    tech: ["React", "REST API", "Swiper"],
-    github: "https://github.com/KamoliddinMirzaboyev/Mixel-E-Commerse-",
-    live: "https://mixel-os.netlify.app/",
-    youtube_url: "",
-    price: "",
-    for_sale: false,
-    sort_order: 3,
-  },
-];
+/** Admin orqali to‘ldiriladi — demo loyihalar yo‘q */
+export const DEFAULT_PROJECTS = [];
 
 function parseGallery(row) {
   if (Array.isArray(row.gallery)) return row.gallery.filter(Boolean);
@@ -122,7 +68,7 @@ function columnMissing(error) {
 
 export async function fetchProjects() {
   if (!isSupabaseConfigured || !supabase) {
-    return DEFAULT_PROJECTS;
+    return [];
   }
 
   const { data, error } = await supabase
@@ -131,12 +77,8 @@ export async function fetchProjects() {
     .order("sort_order", { ascending: true })
     .order("created_at", { ascending: false });
 
-  if (error) {
-    return DEFAULT_PROJECTS;
-  }
-
-  if (!data?.length) {
-    return DEFAULT_PROJECTS;
+  if (error || !data?.length) {
+    return [];
   }
 
   return data.map(normalizeProject);
@@ -146,11 +88,7 @@ export async function fetchProjectBySlugOrId(slugOrId) {
   if (!slugOrId) return null;
 
   if (!isSupabaseConfigured || !supabase) {
-    return (
-      DEFAULT_PROJECTS.find(
-        (p) => p.slug === slugOrId || p.id === slugOrId
-      ) || null
-    );
+    return null;
   }
 
   let { data, error } = await supabase
@@ -170,11 +108,7 @@ export async function fetchProjectBySlugOrId(slugOrId) {
   }
 
   if (error || !data) {
-    return (
-      DEFAULT_PROJECTS.find(
-        (p) => p.slug === slugOrId || p.id === slugOrId
-      ) || null
-    );
+    return null;
   }
 
   return normalizeProject(data);

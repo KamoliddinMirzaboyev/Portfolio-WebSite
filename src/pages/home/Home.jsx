@@ -496,27 +496,16 @@ function Home() {
                   {t.portfolio.empty}
                 </p>
               )}
-              {filtered.map((item, index) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 36 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: 0.9,
-                    delay: (index % 6) * 0.08,
-                    ease,
-                  }}
-                  whileHover={{ y: -6, transition: { duration: 0.4, ease } }}
-                >
-                  <Glass className="lg-portfolio" borderRadius={20} blur={0.5}>
+              {filtered.map((item) => (
+                <div key={item.id} className="portfolio-cell">
+                  <Glass className="lg-portfolio" borderRadius={20}>
                     <article className="portfolioBox portfolioBox-inner">
                       <Link
                         to={`/project/${item.slug || item.id}`}
                         className="projectImg projectImg-link"
                       >
                         <img
-                          src={item.img || "/mixel.png"}
+                          src={item.img || ""}
                           alt={item.name}
                           loading="lazy"
                         />
@@ -558,18 +547,17 @@ function Home() {
                               href={item.live}
                               target="_blank"
                               rel="noreferrer"
+                              className="liveLink"
                             >
-                              <div className="liveLink">
-                                <LuExternalLink />
-                                <p>Live</p>
-                              </div>
+                              <LuExternalLink />
+                              <span>Live</span>
                             </a>
                           )}
                         </div>
                       </div>
                     </article>
                   </Glass>
-                </motion.div>
+                </div>
               ))}
             </div>
           </div>

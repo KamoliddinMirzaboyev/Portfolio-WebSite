@@ -69,7 +69,6 @@ button.heroBtn,
 a.heroBtn,
 button.sendBtn,
 a.project-btn,
-a.project-detail-link,
 a.blog-read,
 a.blog-article-link,
 .admin-btn,
@@ -146,7 +145,6 @@ a.project-btn > *,
 button.heroBtn.contactBtn,
 a.heroBtn.contactBtn,
 a.project-btn.ghost,
-a.project-detail-link,
 a.blog-read,
 .admin-btn.ghost,
 .contact-links a {
@@ -176,7 +174,6 @@ a.blog-read,
 button.heroBtn.contactBtn:hover,
 a.heroBtn.contactBtn:hover,
 a.project-btn.ghost:hover,
-a.project-detail-link:hover,
 a.blog-read:hover,
 .admin-btn.ghost:hover,
 .contact-links a:hover {
@@ -188,7 +185,8 @@ a.blog-read:hover,
     ),
     var(--lb-fill-hover);
   border-color: var(--lb-border-hover);
-  transform: translateY(-1px) scale(1.02);
+  /* scale yo‘q — likkillash */
+  transform: none;
 }
 
 .liquid-btn:active,
@@ -197,7 +195,8 @@ a.heroBtn:active,
 button.sendBtn:active,
 a.project-btn:active,
 .admin-btn:active {
-  transform: translateY(0) scale(0.97);
+  transform: none;
+  opacity: 0.92;
 }
 
 /* ----- primary filled liquid ----- */
@@ -237,7 +236,7 @@ button.sendBtn:hover,
 a.project-btn.primary:hover,
 a.blog-article-link:hover,
 .admin-btn:not(.ghost):not(.danger):hover {
-  transform: translateY(-1px) scale(1.02);
+  transform: none;
   filter: brightness(1.04);
 }
 

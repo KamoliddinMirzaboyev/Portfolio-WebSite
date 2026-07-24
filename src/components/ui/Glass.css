@@ -122,8 +122,12 @@
 }
 
 .lg-skill:hover,
-.lg-card:hover,
-.lg-portfolio:hover {
+.lg-card:hover {
   box-shadow: var(--glass-panel-shadow-hover);
   border-color: var(--glass-panel-border-hover);
+}
+
+/* portfolio hover — portfolio-cell orqali, transform yo‘q */
+.lg-portfolio {
+  transform: none !important;
 }
