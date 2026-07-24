@@ -36,7 +36,8 @@ export const SITE_KEYWORDS = [
   "Farg'ona dasturchi",
   "Kamoliddinmirzaboyev",
 ].join(", ");
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/mixel.png`;
+export const SITE_LOGO = "/icon.png";
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/icon.png`;
 
 /** Web3Forms public access key (client-side OK) */
 export const WEB3FORMS_ACCESS_KEY =

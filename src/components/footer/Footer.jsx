@@ -57,10 +57,10 @@ function Footer() {
         viewport={{ once: true }}
         transition={{ duration: 0.6 }}
       >
-        <div className="logo">
-          <h2>
-            <span>Kamoliddin</span>.dev
-          </h2>
+        <div className="logo footer-logo">
+          <div className="footer-logo-row">
+            <img src="/icon.png" alt="Kamoliddin Mirzaboyev" className="logo-img" />
+          </div>
           <p className="footerCopy">
             © {new Date().getFullYear()} {t.footer.rights}
           </p>

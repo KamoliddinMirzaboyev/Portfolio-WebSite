@@ -843,7 +843,7 @@ function Admin() {
       <div className="admin-shell admin-shell--auth">
         <Seo title="Admin" path="/admin" noindex />
         <div className="admin-auth-card">
-          <div className="admin-auth-brand">KM</div>
+          <img src="/icon.png" alt="" className="admin-auth-brand-img" />
           <h1>Sozlash kerak</h1>
           <p className="admin-muted">
             `.env` ga <code>VITE_SUPABASE_URL</code> va{" "}
@@ -867,7 +867,7 @@ function Admin() {
       <div className="admin-shell admin-shell--auth">
         <Seo title="Admin" path="/admin" noindex />
         <form className="admin-auth-card" onSubmit={handleLogin}>
-          <div className="admin-auth-brand">KM</div>
+          <img src="/icon.png" alt="" className="admin-auth-brand-img" />
           <h1>Admin</h1>
           <p className="admin-muted">Portfolio boshqaruv paneliga kiring</p>
           <label>
@@ -925,7 +925,7 @@ function Admin() {
       <aside className="admin-sidebar">
         <div className="admin-sidebar-top">
           <div className="admin-sidebar-brand">
-            <span className="admin-sidebar-logo">KM</span>
+            <img src="/icon.png" alt="" className="admin-sidebar-logo" />
             <div className="admin-sidebar-brand-text">
               <strong>Portfolio</strong>
               <span>Admin</span>

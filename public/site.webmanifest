@@ -9,16 +9,10 @@
   "lang": "uz",
   "icons": [
     {
-      "src": "/reacticon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "/mixel.png",
+      "src": "/icon.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any"
+      "purpose": "any maskable"
     }
   ]
 }

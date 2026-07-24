@@ -23,15 +23,19 @@ footer .footer-top {
   flex-wrap: wrap;
 }
 
-footer .logo h2 {
-  font-size: 18px;
-  font-weight: 650;
-  font-family: var(--font, system-ui, sans-serif);
-  color: var(--text);
+footer .footer-logo-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
 }
 
-footer .logo h2 span {
-  color: var(--text-secondary);
+footer .logo-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  object-fit: cover;
+  display: block;
+  flex-shrink: 0;
 }
 
 .footerCopy {

@@ -55,7 +55,8 @@ html[data-theme="light"] .admin-shell {
   gap: 14px;
 }
 
-.admin-auth-brand {
+.admin-auth-brand,
+.admin-auth-brand-img {
   width: 42px;
   height: 42px;
   border-radius: 11px;
@@ -65,6 +66,12 @@ html[data-theme="light"] .admin-shell {
   font-size: 13px;
   color: #09090b;
   background: #fafafa;
+  object-fit: cover;
+}
+
+.admin-auth-brand-img {
+  display: block;
+  background: transparent;
 }
 
 html[data-theme="light"] .admin-auth-brand {
@@ -170,19 +177,10 @@ html[data-theme="light"] .admin-auth-brand {
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 11px;
-  letter-spacing: -0.02em;
-  color: #09090b;
-  background: #fafafa;
+  display: block;
+  object-fit: cover;
   flex-shrink: 0;
-}
-
-html[data-theme="light"] .admin-sidebar-logo {
-  color: #fafafa;
-  background: #18181b;
+  background: transparent;
 }
 
 .admin-sidebar-brand-text strong {

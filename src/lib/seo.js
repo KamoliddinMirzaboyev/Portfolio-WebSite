@@ -64,7 +64,7 @@ export function applySeo({
   const url = `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
   const img = image?.startsWith("http")
     ? image
-    : `${SITE_URL}${image?.startsWith("/") ? image : `/${image || "mixel.png"}`}`;
+    : `${SITE_URL}${image?.startsWith("/") ? image : `/${image || "icon.png"}`}`;
 
   document.title = fullTitle;
   document.documentElement.lang =
