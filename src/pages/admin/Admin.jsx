@@ -11,7 +11,11 @@ import {
   LuX,
 } from "react-icons/lu";
 import ContentEditor from "./ContentEditor";
-import { supabase, isSupabaseConfigured } from "../../lib/supabase";
+import {
+  getSupabaseConfigStatus,
+  isSupabaseConfigured,
+  supabase,
+} from "../../lib/supabase";
 import {
   createProject,
   deleteProject,
@@ -272,9 +276,12 @@ function Admin() {
       setProjects([]);
       setDbReady(false);
       const msg = String(err?.message || "");
-      if (/failed to fetch|network|fetch/i.test(msg)) {
+      const cfg = getSupabaseConfigStatus();
+      if (/failed to fetch|network|fetch|cors/i.test(msg)) {
         notify(
-          "Supabase ulanmadi. Internet yoki .env (VITE_SUPABASE_URL / ANON_KEY) ni tekshiring."
+          cfg.configured
+            ? `Supabase ulanmadi (${cfg.urlHost || "host?"}). Vercelda env o'zgargach Redeploy qiling. Local: dev serverni qayta ishga tushiring.`
+            : "Env yo'q: VITE_SUPABASE_URL va VITE_SUPABASE_ANON_KEY ni Vercel Environment Variables ga qo'shing (Production), keyin Redeploy."
         );
       } else {
         notify(msg || "Loyihalar yuklash xatosi");
@@ -1012,9 +1019,30 @@ function Admin() {
         <div className="admin-content">
           {dbReady === false && (
             <div className="admin-setup-banner">
-              <strong>Supabase jadvallari yo&apos;q</strong>
+              <strong>Supabase ulanish / jadvallar</strong>
               <p>
-                SQL Editor da: <code>supabase/SETUP_ALL.sql</code>
+                1) Supabase → SQL Editor da <code>SETUP_ALL.sql</code> va{" "}
+                <code>site_content.sql</code> ni Run qiling.
+              </p>
+              <p>
+                2) Vercel → Project → Settings → Environment Variables:
+                <br />
+                <code>VITE_SUPABASE_URL</code> ={" "}
+                <code>https://xxxx.supabase.co</code>
+                <br />
+                <code>VITE_SUPABASE_ANON_KEY</code> = anon public key
+              </p>
+              <p>
+                3) Env qo&apos;shgach <strong>Deployments → Redeploy</strong>{" "}
+                (Build Cache bo&apos;lsa, Clear cache).
+              </p>
+              <p>
+                Status: URL{" "}
+                {getSupabaseConfigStatus().hasUrl ? "✓" : "✗"} · KEY{" "}
+                {getSupabaseConfigStatus().hasKey ? "✓" : "✗"}
+                {getSupabaseConfigStatus().urlHost
+                  ? ` · ${getSupabaseConfigStatus().urlHost}`
+                  : ""}
               </p>
             </div>
           )}
