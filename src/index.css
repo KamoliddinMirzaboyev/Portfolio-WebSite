@@ -1,15 +1,261 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Roboto:ital,wght@0,100..900;1,100..900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,400;0,500;0,600;0,700&display=swap");
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-scroll-behavior: smooth;
-  font-family: "Roboto";
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* ========== DARK (default) ========== */
+:root,
+html[data-theme="dark"] {
+  --bg: #050506;
+  --bg-elevated: #0c0c0e;
+  --bg-secondary: #121216;
+  --text: #f5f5f7;
+  --text-secondary: rgba(235, 235, 245, 0.62);
+  --text-tertiary: rgba(235, 235, 245, 0.42);
+  --border: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.28);
+  --nav-bg: rgba(8, 8, 10, 0.62);
+  --nav-border: rgba(255, 255, 255, 0.1);
+  --glass-fill: rgba(255, 255, 255, 0.1);
+  --glass-fill-strong: rgba(255, 255, 255, 0.16);
+  --glass-border: rgba(255, 255, 255, 0.32);
+  --glass-highlight: rgba(255, 255, 255, 0.45);
+  --glass-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+  /* Card — shaffof, blur YO‘Q (orqa grid o‘tkir) */
+  --glass-panel-bg: rgba(10, 10, 14, 0.55);
+  --glass-panel-border: rgba(255, 255, 255, 0.14);
+  --glass-panel-border-hover: rgba(255, 255, 255, 0.24);
+  --glass-panel-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.08) inset,
+    0 8px 24px rgba(0, 0, 0, 0.3);
+  --glass-panel-shadow-hover:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 12px 28px rgba(0, 0, 0, 0.36);
+  --glass-panel-inset: none;
+  --glass-panel-shine: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 40%
+  );
+  --glass-panel-blur: 0px;
+  --glass-panel-sat: 100%;
+  --btn-primary-bg: #f4f4f5;
+  --btn-primary-text: #0a0a0c;
+  --btn-ghost-border: rgba(255, 255, 255, 0.2);
+  --muted: #71717a;
+  --grid-line: rgba(180, 180, 200, 0.2);
+  --canvas-bg: #050506;
+  --bolt: 255, 255, 255;
+  --input-bg: rgba(255, 255, 255, 0.07);
+  --input-focus-bg: rgba(255, 255, 255, 0.1);
+  --chip-bg: rgba(255, 255, 255, 0.08);
+  --selection: rgba(255, 255, 255, 0.2);
+  --scrollbar: rgba(255, 255, 255, 0.18);
+  --media-bg: rgba(0, 0, 0, 0.35);
+  --hover-border: rgba(255, 255, 255, 0.22);
+  --focus-ring: rgba(255, 255, 255, 0.12);
+  --focus-border: rgba(255, 255, 255, 0.32);
+  --divider: rgba(255, 255, 255, 0.12);
+  --list-item-bg: rgba(0, 0, 0, 0.22);
+  --avatar-bg: #f5f5f7;
+  --avatar-text: #0a0a0c;
+  --timeline-dot: #f5f5f7;
+  --timeline-dot-ring: #050506;
+  --link-underline: rgba(255, 255, 255, 0.7);
+  --success: #34c759;
+  --success-text: #86efac;
+  --success-bg: rgba(52, 199, 89, 0.15);
+  --success-border: rgba(52, 199, 89, 0.35);
+  --danger-text: #fca5a5;
+  --danger-bg: rgba(255, 69, 58, 0.12);
+  --danger-border: rgba(255, 69, 58, 0.28);
+  --warning-text: #fde68a;
+  --warning-bg: rgba(251, 191, 36, 0.12);
+  --warning-border: rgba(251, 191, 36, 0.35);
+  --code-bg: rgba(0, 0, 0, 0.28);
+  --hero-glow: rgba(255, 255, 255, 0.07);
+  --about-glow: rgba(255, 255, 255, 0.1);
+  color-scheme: dark;
+}
+
+/* ========== LIGHT — iOS system palette ========== */
+html[data-theme="light"] {
+  /* iOS: systemGroupedBackground / secondarySystemGroupedBackground */
+  --bg: #f2f2f7;
+  --bg-elevated: #ffffff;
+  --bg-secondary: #e5e5ea;
+  --text: #1c1c1e;
+  --text-secondary: rgba(60, 60, 67, 0.72);
+  --text-tertiary: rgba(60, 60, 67, 0.48);
+  --border: rgba(60, 60, 67, 0.12);
+  --border-strong: rgba(60, 60, 67, 0.22);
+  --nav-bg: rgba(255, 255, 255, 0.72);
+  --nav-border: rgba(60, 60, 67, 0.1);
+  /* Frosted glass — white frost over soft gray */
+  --glass-fill: rgba(255, 255, 255, 0.62);
+  --glass-fill-strong: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.88);
+  --glass-highlight: rgba(255, 255, 255, 0.95);
+  --glass-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 8px 28px rgba(15, 23, 42, 0.08),
+    0 2px 8px rgba(15, 23, 42, 0.04);
+  --glass-panel-bg: rgba(255, 255, 255, 0.62);
+  --glass-panel-border: rgba(60, 60, 67, 0.12);
+  --glass-panel-border-hover: rgba(60, 60, 67, 0.2);
+  --glass-panel-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 8px 20px rgba(15, 23, 42, 0.07);
+  --glass-panel-shadow-hover:
+    0 1px 0 rgba(255, 255, 255, 1) inset,
+    0 12px 24px rgba(15, 23, 42, 0.09);
+  --glass-panel-inset: none;
+  --glass-panel-shine: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    transparent 38%
+  );
+  --glass-panel-blur: 0px;
+  --glass-panel-sat: 100%;
+  --btn-primary-bg: #1c1c1e;
+  --btn-primary-text: #f5f5f7;
+  --btn-ghost-border: rgba(60, 60, 67, 0.18);
+  --muted: #8e8e93;
+  --grid-line: rgba(60, 60, 67, 0.1);
+  --canvas-bg: #e8e8ed;
+  --bolt: 90, 100, 130;
+  --input-bg: rgba(255, 255, 255, 0.85);
+  --input-focus-bg: #ffffff;
+  --chip-bg: rgba(120, 120, 128, 0.1);
+  --selection: rgba(0, 122, 255, 0.22);
+  --scrollbar: rgba(60, 60, 67, 0.28);
+  --media-bg: rgba(120, 120, 128, 0.12);
+  --hover-border: rgba(60, 60, 67, 0.22);
+  --focus-ring: rgba(0, 122, 255, 0.16);
+  --focus-border: rgba(0, 122, 255, 0.45);
+  --divider: rgba(60, 60, 67, 0.14);
+  --list-item-bg: rgba(120, 120, 128, 0.08);
+  --avatar-bg: #1c1c1e;
+  --avatar-text: #f5f5f7;
+  --timeline-dot: #1c1c1e;
+  --timeline-dot-ring: #f2f2f7;
+  --link-underline: rgba(28, 28, 30, 0.55);
+  --success: #34c759;
+  --success-text: #1a7f37;
+  --success-bg: rgba(52, 199, 89, 0.14);
+  --success-border: rgba(52, 199, 89, 0.32);
+  --danger-text: #d70015;
+  --danger-bg: rgba(255, 59, 48, 0.1);
+  --danger-border: rgba(255, 59, 48, 0.28);
+  --warning-text: #9a6700;
+  --warning-bg: rgba(255, 204, 0, 0.16);
+  --warning-border: rgba(255, 179, 0, 0.4);
+  --code-bg: rgba(120, 120, 128, 0.14);
+  --hero-glow: rgba(0, 122, 255, 0.06);
+  --about-glow: rgba(0, 122, 255, 0.05);
+  color-scheme: light;
+}
+
+:root {
+  --crystal-radius: 20px;
+  --blur: 32px;
+  --ease-ios: cubic-bezier(0.32, 0.72, 0, 1);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter",
+    system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: #09090b;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  overflow-x: hidden;
+  min-height: 100vh;
+  letter-spacing: -0.01em;
+  transition: background-color 0.35s ease, color 0.35s ease;
 }
+
+#root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
 .container {
-  max-width: 1300px;
+  max-width: 1100px;
   margin: 0 auto;
+  padding: 0 22px;
+  width: 100%;
+}
+
+/* Fallback CSS glass — blur yo‘q */
+.glass {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--crystal-radius);
+  background: var(--glass-panel-bg);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+}
+
+.glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: var(--glass-panel-shine);
+  opacity: 1;
+  z-index: 0;
+}
+
+.glass::after {
+  display: none;
+}
+
+.glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background: var(--selection);
+  color: var(--text);
+}
+
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar);
+  border-radius: 99px;
+}
+
+/* Placeholder & form defaults */
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
+input,
+textarea,
+select {
+  color: var(--text);
 }

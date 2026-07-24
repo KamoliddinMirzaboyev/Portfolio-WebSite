@@ -1,0 +1,129 @@
+/* =========================================================
+   Transparent glass panels — NO backdrop-filter
+   Orqa fon o‘tkir ko‘rinadi, "frost blur" yo‘q
+   ========================================================= */
+
+.lg-host.glass-panel,
+.glass-panel {
+  position: relative;
+  width: 100%;
+  display: block;
+  overflow: hidden;
+  box-sizing: border-box;
+  background: var(--glass-panel-bg);
+  border: 1px solid var(--glass-panel-border);
+  box-shadow: var(--glass-panel-shadow);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  isolation: auto;
+  transform: none;
+  contain: none;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.glass-panel-shine {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 0;
+  background: var(--glass-panel-shine);
+  /* shine ham blur qilmasin */
+  filter: none;
+  backdrop-filter: none;
+}
+
+.glass-panel-shine::after {
+  display: none;
+}
+
+.lg-content {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  filter: none !important;
+}
+
+/* ----- layout variants ----- */
+.lg-skill {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+}
+
+.lg-skill .lg-content {
+  padding: 26px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 210px;
+  height: 100%;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.lg-about {
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.lg-about .lg-content {
+  padding: 32px 26px;
+  text-align: center;
+}
+
+.lg-portfolio {
+  width: 100%;
+  height: 100%;
+}
+
+.lg-portfolio .lg-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.lg-portfolio .lg-content .projectImg {
+  border-radius: 0;
+}
+
+.lg-form {
+  width: 100%;
+  max-width: 640px;
+}
+
+.lg-form .lg-content {
+  padding: 28px 24px;
+}
+
+.lg-card .lg-content {
+  padding: 22px 24px;
+}
+
+.lg-admin {
+  width: 100%;
+  margin-bottom: 20px;
+}
+
+.lg-admin .lg-content {
+  padding: 24px;
+}
+
+.lg-skill:hover,
+.lg-card:hover,
+.lg-portfolio:hover {
+  box-shadow: var(--glass-panel-shadow-hover);
+  border-color: var(--glass-panel-border-hover);
+}

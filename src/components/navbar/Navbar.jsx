@@ -1,77 +1,162 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import "./Navbar.css";
-import { NavLink } from "react-router-dom";
-import { IoLogoGithub } from "react-icons/io";
-import { LuGithub } from "react-icons/lu";
+import { Link, useLocation } from "react-router-dom";
+import { LuGithub, LuMoon, LuSun } from "react-icons/lu";
 import { FiLinkedin } from "react-icons/fi";
-import Button from "@mui/material/Button";
-import Tooltip from "@mui/material/Tooltip";
-import { FaBriefcase, FaTelegramPlane } from "react-icons/fa";
+import { FaTelegramPlane } from "react-icons/fa";
+import { HiOutlineMail } from "react-icons/hi";
 import { motion } from "framer-motion";
+import { useLang } from "../../i18n/LanguageContext";
+import { useTheme } from "../../theme/ThemeContext";
+import {
+  EMAIL,
+  GITHUB_URL,
+  LINKEDIN_URL,
+  TELEGRAM_URL,
+} from "../../lib/constants";
 
 function Navbar() {
+  const [scrolled, setScrolled] = useState(false);
+  const { t, locale, setLocale, locales } = useLang();
+  const { isDark, toggleTheme } = useTheme();
+  const { pathname } = useLocation();
+  const onHome = pathname === "/";
+
+  const section = (hash) => (onHome ? hash : `/${hash}`);
+
+  const links = [
+    { label: t.nav.home, to: "/", type: "route" },
+    { label: t.nav.about, to: section("#aboutSection"), type: "hash" },
+    { label: t.nav.experience, to: section("#experience"), type: "hash" },
+    { label: t.nav.portfolio, to: section("#portfolio"), type: "hash" },
+    { label: t.nav.blog, to: "/blog", type: "route" },
+    { label: t.nav.skills, to: section("#skills"), type: "hash" },
+    { label: t.nav.contact, to: section("#contact"), type: "hash" },
+  ];
+
+  const socials = [
+    { href: GITHUB_URL, icon: <LuGithub />, tooltip: "GitHub" },
+    { href: TELEGRAM_URL, icon: <FaTelegramPlane />, tooltip: "Telegram" },
+    {
+      href: `mailto:${EMAIL}`,
+      icon: <HiOutlineMail />,
+      tooltip: "Email",
+    },
+    { href: LINKEDIN_URL, icon: <FiLinkedin />, tooltip: "LinkedIn" },
+  ];
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   return (
-    <div>
-      <motion.nav
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <div className="container">
-          <motion.a 
-            href="#" 
-            className="logo"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.2 }}
-          >
-            <h2>
-              <span>Kamoliddin</span>.dev
-            </h2>
-          </motion.a>
-          <div className="navLinks">
-            {["Home", "About", "Portfolio", "Skills", "Contact"].map((item, index) => (
-              <motion.a 
-                key={item}
-                href={item === "Home" ? "#" : `#${item.toLowerCase()}${item === "About" ? "Section" : ""}`}
-                className="a"
-                initial={{ opacity: 0, y: -20 }}
+    <motion.nav
+      className={scrolled ? "scrolled" : ""}
+      initial={{ y: -24, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
+    >
+      <div className="container">
+        <Link to="/" className="logo">
+          <h2>
+            <span>Kamoliddin</span>.dev
+          </h2>
+        </Link>
+
+        <div className="navLinks">
+          {links.map((item, index) =>
+            item.type === "route" ? (
+              <motion.div
+                key={item.to + item.label}
+                initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 * index }}
-                whileHover={{ scale: 1.1, color: "#6468f9" }}
+                transition={{
+                  duration: 0.7,
+                  delay: 0.06 * index,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
               >
-                {item}
+                <Link to={item.to} className="a">
+                  {item.label}
+                </Link>
+              </motion.div>
+            ) : (
+              <motion.a
+                key={item.to + item.label}
+                href={item.to}
+                className="a"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{
+                  duration: 0.7,
+                  delay: 0.06 * index,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+              >
+                {item.label}
               </motion.a>
+            )
+          )}
+        </div>
+
+        <div className="nav-right">
+          <button
+            type="button"
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={isDark ? "Light mode" : "Dark mode"}
+            title={isDark ? "Light" : "Dark"}
+          >
+            {isDark ? <LuSun /> : <LuMoon />}
+          </button>
+
+          <div className="lang-switch" role="group" aria-label="Language">
+            {locales.map((code) => (
+              <button
+                key={code}
+                type="button"
+                className={`lang-btn ${locale === code ? "active" : ""}`}
+                onClick={() => setLocale(code)}
+              >
+                {code.toUpperCase()}
+              </button>
             ))}
           </div>
+
           <div className="navBtns">
-            {[
-              { href: "https://github.com/Kamoliddinmirzaboyev05", icon: <LuGithub />, tooltip: "Github" },
-              { href: "https://t.me/MKPortfolio_Codial", icon: <FaBriefcase />, tooltip: "Portfolio" },
-              { href: "https://www.linkedin.com/in/kamoliddin-mirzaboyev-8226a4329/", icon: <FiLinkedin />, tooltip: "Linkedin" },
-              { href: "https://t.me/Kamoliddin_Mirzaboyev", icon: <FaTelegramPlane />, tooltip: "Telegram" }
-            ].map((btn, index) => (
+            {socials.map((btn, index) => (
               <motion.a
-                key={index}
+                key={btn.tooltip}
                 href={btn.href}
-                target="blank"
+                target={btn.href.startsWith("http") ? "_blank" : undefined}
+                rel={btn.href.startsWith("http") ? "noreferrer" : undefined}
                 className="tooltip-wrapper"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: 0.6 + index * 0.1 }}
-                whileHover={{ scale: 1.2, rotate: 5 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{
+                  duration: 0.6,
+                  delay: 0.4 + index * 0.06,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
               >
-                <button className="navBtn">
+                <button
+                  type="button"
+                  className="navBtn"
+                  aria-label={btn.tooltip}
+                >
                   {btn.icon}
                   <div className="tooltip">
-                    {btn.tooltip} <span className="tooltip-arrow"></span>
+                    {btn.tooltip} <span className="tooltip-arrow" />
                   </div>
                 </button>
               </motion.a>
             ))}
           </div>
         </div>
-      </motion.nav>
-    </div>
+      </div>
+    </motion.nav>
   );
 }
 

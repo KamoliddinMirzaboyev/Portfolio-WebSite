@@ -1,244 +1,112 @@
 footer {
-  border-bottom: 1px solid #222224;
-  padding: 25px 0;
-  backdrop-filter: blur(20px);
-  background-color: rgba(0, 0, 0, 0.55);
-  box-shadow: 0px 0px 2px gray;
-  transition: all 0.3s ease-in-out;
+  border-top: 1px solid var(--border);
+  padding: 36px 0 24px;
+  background: var(--nav-bg);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  position: relative;
+  z-index: 1;
+  transition: background 0.35s ease, border-color 0.35s ease;
 }
-:root {
-  --text-color: #6468f9;
+
+html[data-theme="light"] footer {
+  background: rgba(255, 255, 255, 0.7);
+  border-top-color: rgba(60, 60, 67, 0.1);
 }
-footer .container {
+
+footer .footer-top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #fafafa;
+  color: var(--text);
+  gap: 24px;
+  flex-wrap: wrap;
 }
-.logo h2 {
-  font-size: 28px;
-  font-weight: 600;
-}
-.logo h2 span {
-  color: var(--text-color);
-}
-.footerCopy {
-  color: #ccc;
-}
-a {
-  color: #fafafa;
+
+footer .logo h2 {
   font-size: 18px;
+  font-weight: 650;
+  font-family: var(--font, system-ui, sans-serif);
+  color: var(--text);
+}
+
+footer .logo h2 span {
+  color: var(--text-secondary);
+}
+
+.footerCopy {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 6px;
+}
+
+footer .navLinks {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+footer .navLinks a {
+  color: var(--muted);
+  font-size: 13px;
   text-decoration: none;
-  transition: all 0.5s ease;
-  position: relative;
+  transition: color 0.25s ease;
 }
-.navLinks {
+
+footer .navLinks a:hover {
+  color: var(--text);
+}
+
+footer .navBtns {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 25px;
+  gap: 6px;
 }
-.navLinks a:hover {
-  color: #6468f9;
+
+footer .navBtn {
+  border: 1px solid var(--border);
+  background: var(--glass-fill);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.25s ease;
 }
-.navLinks a::after {
-  position: absolute;
-  content: "";
-  bottom: -10px;
-  left: 0;
-  height: 2px;
-  width: 0;
-  background-color: #6468f9;
-  color: #6468f9;
-  transition: all .5s ease;
+
+footer .navBtn:hover {
+  background: var(--glass-fill-strong);
 }
-.navLinks a:hover::after {
-    width: 100%;
+
+footer .navBtn svg {
+  color: var(--text-secondary);
+  font-size: 15px;
 }
-.navBtns {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
+
+footer .navBtn:hover svg {
+  color: var(--text);
 }
-.navBtn {
-  border: none;
-  background-color: transparent;
-}
-.navBtn svg {
-  color: #fafafa;
-  font-size: 20px;
-}
+
 .powered {
   width: 100%;
   text-align: center;
-  padding-top: 10px;
-  color: #818181;
+  padding-top: 18px;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  user-select: none;
+  cursor: default;
 }
+
 @media (max-width: 768px) {
- footer .container {
+  footer .footer-top {
     flex-direction: column;
-    align-items: center;
+    text-align: center;
   }
- footer .navLinks {
-    margin-top: 10px;
-  }
- footer .navBtns {
-    margin-top: 10px;
-    padding-bottom: 20px;
-  }
-  footer .logo{
+  footer .logo {
     display: flex;
     flex-direction: column;
     align-items: center;
   }
-}
-
-/* Enhanced Professional Footer Animations */
-
-/* Footer Fade In */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-footer {
-  animation: fadeInUp 0.8s ease-out;
-}
-
-/* Logo Hover Effect */
-.logo {
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.logo:hover h2 {
-  transform: scale(1.05);
-  text-shadow: 0 0 20px rgba(100, 104, 249, 0.4);
-}
-
-.logo h2 {
-  transition: all 0.3s ease;
-}
-
-.logo h2 span {
-  transition: all 0.3s ease;
-  display: inline-block;
-}
-
-.logo:hover h2 span {
-  color: #878bff;
-  text-shadow: 0 0 25px rgba(100, 104, 249, 0.6);
-}
-
-/* Social Button Hover Effects */
-.navBtn {
-  padding: 10px;
-  width: 45px;
-  height: 45px;
-  border-radius: 50%;
-  transition: all 0.4s ease;
-  position: relative;
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.navBtn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  border-radius: 50%;
-  background: rgba(100, 104, 249, 0.2);
-  transform: translate(-50%, -50%);
-  transition: width 0.4s ease, height 0.4s ease;
-}
-
-.navBtn:hover::before {
-  width: 100%;
-  height: 100%;
-}
-
-.navBtn:hover {
-  background-color: #222224;
-  transform: translateY(-5px) rotate(10deg);
-  box-shadow: 0 10px 20px rgba(100, 104, 249, 0.3);
-}
-
-.navBtn:hover svg {
-  color: #6468f9;
-  transform: scale(1.2);
-}
-
-.navBtn svg {
-  transition: all 0.3s ease;
-  position: relative;
-  z-index: 1;
-}
-
-/* Link Underline Animation */
-.navLinks a {
-  overflow: hidden;
-}
-
-.navLinks a::after {
-  transform-origin: left;
-  transition: transform 0.3s ease;
-}
-
-.navLinks a:hover::after {
-  transform: scaleX(1);
-}
-
-/* Powered By Text Animation */
-.powered {
-  transition: all 0.3s ease;
-  cursor: default;
-}
-
-.powered:hover {
-  color: #6468f9;
-  letter-spacing: 1px;
-}
-
-/* Footer Copy Fade */
-.footerCopy {
-  transition: all 0.3s ease;
-  opacity: 0.7;
-}
-
-.logo:hover .footerCopy {
-  opacity: 1;
-  color: #fff;
-}
-
-/* Stagger Animation for Links */
-.navLinks a:nth-child(1) { animation-delay: 0.1s; }
-.navLinks a:nth-child(2) { animation-delay: 0.2s; }
-.navLinks a:nth-child(3) { animation-delay: 0.3s; }
-.navLinks a:nth-child(4) { animation-delay: 0.4s; }
-.navLinks a:nth-child(5) { animation-delay: 0.5s; }
-
-/* Gradient Border Effect */
-footer::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #6468f9, transparent);
-  opacity: 0.5;
-}
-
-footer {
-  position: relative;
 }

@@ -1,291 +1,225 @@
 nav {
-  border-bottom: 1px solid #222224;
-  padding: 25px 0;
   position: fixed;
   z-index: 999;
   width: 100%;
-  backdrop-filter: blur(20px);
-  background-color: rgba(0, 0, 0, 0.55);
-  box-shadow: 0px 0px 2px gray;
-  transition: all 0.3s ease-in-out;
-  scroll-behavior: smooth;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--nav-border);
+  background: var(--nav-bg);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  transition: padding 0.35s ease, background 0.35s ease, border-color 0.35s ease;
 }
-:root {
-  --text-color: #6468f9;
+
+nav.scrolled {
+  padding: 10px 0;
 }
+
 nav .container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #fafafa;
+  color: var(--text);
+  position: relative;
 }
+
 .logo {
   cursor: pointer;
-}
-.logo h2 {
-  font-size: 28px;
-  font-weight: 600;
-  color: white;
-}
-.logo h2 span {
-  color: var(--text-color);
-}
-a {
-  color: #fafafa;
-  font-size: 18px;
   text-decoration: none;
 }
+
+.logo h2 {
+  font-size: 20px;
+  font-weight: 650;
+  color: var(--text);
+  font-family: var(--font, system-ui, sans-serif);
+  letter-spacing: -0.02em;
+}
+
+.logo h2 span {
+  color: var(--text-secondary);
+}
+
 .navLinks {
   display: flex;
   align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 25px;
 }
+
+/* oddiy matn link — liquid pill emas */
+nav a.a {
+  position: relative;
+  display: inline-block;
+  color: var(--text-secondary);
+  font-size: 13.5px;
+  font-weight: 520;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  line-height: 1.2;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: visible;
+  isolation: auto;
+  transition: color 0.28s var(--ease-ios, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+nav a.a::before {
+  display: none !important;
+  content: none !important;
+}
+
+nav a.a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 1px;
+  background: var(--text);
+  transition: width 0.32s var(--ease-ios, cubic-bezier(0.32, 0.72, 0, 1));
+}
+
+nav a.a:hover {
+  color: var(--text);
+  transform: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  filter: none;
+}
+
+nav a.a:hover::after {
+  width: 100%;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  font: inherit;
+}
+
+.theme-toggle svg {
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
+}
+
+.lang-btn {
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+}
+
 .navBtns {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 15px;
+  gap: 6px;
 }
+
 .navBtn {
-  border: none;
-  padding: 10px;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  transition: all 0.5s ease;
-  position: relative;
-  background-color: transparent;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
 }
-.navBtn .socialName {
-  position: absolute;
-  bottom: 0px;
-  opacity: 0;
-  left: -15px;
-  color: #7f83ff;
-  font-size: 16px;
-  transition: all 0.5s ease;
-  transform: scale(0);
-}
-.navBtn:hover .socialName {
-  bottom: -30px;
-  opacity: 1;
-  transform: scale(1);
-}
-.navBtn:hover {
-  color: #6468f9;
-  background-color: #222224;
-}
-.navBtn:hover svg {
-  color: #6468f9;
-}
+
 .navBtn svg {
-  color: #fafafa;
-  font-size: 20px;
+  font-size: 16px;
+  position: relative;
+  z-index: 1;
 }
+
 .tooltip-wrapper {
   position: relative;
   display: inline-block;
-  cursor: pointer;
-  font-weight: bold;
-  color: #333;
 }
 
 .tooltip {
   position: absolute;
-  bottom: 0px;
+  bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #3d41b2;
-  color: white;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
   padding: 5px 10px;
   border-radius: 8px;
   white-space: nowrap;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  /* box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2); */
+  transition: opacity 0.2s ease, transform 0.2s ease;
   z-index: 10;
+  font-size: 11px;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+html[data-theme="light"] nav {
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom-color: rgba(60, 60, 67, 0.1);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.6) inset;
+}
+
+html[data-theme="light"] .tooltip {
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .tooltip-wrapper:hover .tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(40px);
 }
+
 .tooltip-arrow {
   position: absolute;
-  top: -10px;
+  top: -6px;
   left: 50%;
-  z-index: 999999;
   transform: translateX(-50%) rotate(180deg);
   width: 0;
   height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid #3d41b2;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid var(--bg-elevated);
 }
+
 @media (max-width: 960px) {
-  nav {
-    padding-left: 50px;
-    padding-right: 50px;
+  nav .container {
+    padding: 0 14px;
   }
   .navLinks {
-    gap: 20px !important;
+    gap: 12px;
   }
-  .navBtns {
-    gap: 10px !important;
+  .navLinks a {
+    font-size: 12px;
   }
 }
+
 @media (max-width: 780px) {
-  nav {
-    padding-left: 25px;
-    padding-right: 25px;
-  }
   .navLinks {
-    /* gap: 20px !important; */
     display: none !important;
-  }
-  .navBtns {
-    gap: 15px !important;
   }
 }
+
 @media (max-width: 560px) {
-  nav {
-    padding-left: 25px;
-    padding-right: 25px;
-  }
-  .navLinks {
-    /* gap: 20px !important; */
-    display: none !important;
-  }
-  .navBtns {
-    gap: 15px !important;
+  .logo h2 {
     font-size: 16px !important;
   }
-  .navBtn {
-    width: 20px;
-    height: 20px;
-  }
-  .navBtn svg{
-    font-size: 16px;
-  }
-  .logo h2 {
-    font-size: 20px !important;
-    font-weight: 600;
-    color: white;
-  }
-}
-
-/* Enhanced Professional Animations */
-@keyframes slideDown {
-  from {
-    transform: translateY(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-nav {
-  animation: slideDown 0.6s ease-out;
-}
-
-/* Link Hover Effect */
-.navLinks a {
-  position: relative;
-  transition: all 0.3s ease;
-}
-
-.navLinks a::after {
-  content: '';
-  position: absolute;
-  bottom: -5px;
-  left: 0;
-  width: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #5258f7, #878bff);
-  transition: width 0.3s ease;
-}
-
-.navLinks a:hover::after {
-  width: 100%;
-}
-
-.navLinks a:hover {
-  color: #6468f9;
-}
-
-/* Button Ripple Effect */
-@keyframes ripple {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(2);
-    opacity: 0;
-  }
-}
-
-.navBtn::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100%;
-  height: 100%;
-  background: rgba(100, 104, 249, 0.3);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0);
-  transition: transform 0.5s ease;
-}
-
-.navBtn:hover::before {
-  animation: ripple 0.6s ease-out;
-}
-
-/* Logo Glow Effect */
-.logo h2 {
-  transition: all 0.3s ease;
-}
-
-.logo:hover h2 {
-  text-shadow: 0 0 20px rgba(100, 104, 249, 0.5);
-}
-
-.logo h2 span {
-  transition: all 0.3s ease;
-}
-
-.logo:hover h2 span {
-  text-shadow: 0 0 30px rgba(100, 104, 249, 0.8);
-}
-
-/* Tooltip Enhanced Animation */
-.tooltip {
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: 0.5px;
-}
-
-.tooltip-wrapper:hover .tooltip {
-  animation: tooltipBounce 0.5s ease;
-}
-
-@keyframes tooltipBounce {
-  0%, 100% {
-    transform: translateX(-50%) translateY(40px);
-  }
-  50% {
-    transform: translateX(-50%) translateY(35px);
-  }
-}
-
-/* Navbar Scroll Effect */
-nav.scrolled {
-  padding: 15px 0;
-  background-color: rgba(0, 0, 0, 0.85);
-  box-shadow: 0px 5px 20px rgba(0, 0, 0, 0.3);
 }
