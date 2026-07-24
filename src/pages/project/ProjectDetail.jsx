@@ -9,6 +9,8 @@ import {
 import { useLang } from "../../i18n/LanguageContext";
 import Glass from "../../components/ui/Glass";
 import "../../components/ui/Glass.css";
+import Seo from "../../components/seo/Seo";
+import { projectJsonLd } from "../../lib/seo";
 import "./ProjectDetail.css";
 
 const ease = [0.16, 1, 0.3, 1];
@@ -56,6 +58,7 @@ function ProjectDetail() {
   if (loading) {
     return (
       <div className="projectPage">
+        <Seo title="Loyiha" path={`/project/${slug || ""}`} noindex />
         <div className="container">
           <p className="project-empty">{p.loading}</p>
         </div>
@@ -66,6 +69,7 @@ function ProjectDetail() {
   if (!project) {
     return (
       <div className="projectPage">
+        <Seo title="Loyiha topilmadi" path={`/project/${slug || ""}`} noindex />
         <div className="container">
           <p className="project-empty">{p.notFound}</p>
           <Link to="/#portfolio" className="project-back">
@@ -76,8 +80,32 @@ function ProjectDetail() {
     );
   }
 
+  const techLabels = (project.tech || [])
+    .map((t) => (typeof t === "string" ? t : t?.name))
+    .filter(Boolean);
+  const projectDesc =
+    project.info ||
+    project.description ||
+    `${project.name} — Kamoliddin Mirzaboyev frontend loyihasi. ${techLabels.join(", ")}`;
+
   return (
     <div className="projectPage">
+      <Seo
+        title={`${project.name} — Frontend loyiha`}
+        description={projectDesc}
+        path={`/project/${project.slug || project.id}`}
+        image={project.img}
+        type="article"
+        keywords={[
+          project.name,
+          "Kamoliddin Mirzaboyev",
+          "Frontend",
+          "loyiha",
+          "yotoqxona",
+          ...techLabels,
+        ].join(", ")}
+        jsonLd={projectJsonLd(project)}
+      />
       <div className="container project-layout">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

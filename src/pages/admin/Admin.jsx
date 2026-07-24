@@ -1,5 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import {
+  LuFileText,
+  LuFolderKanban,
+  LuGlobe,
+  LuLayoutDashboard,
+  LuLogOut,
+  LuMenu,
+  LuNewspaper,
+  LuX,
+} from "react-icons/lu";
+import ContentEditor from "./ContentEditor";
 import { supabase, isSupabaseConfigured } from "../../lib/supabase";
 import {
   createProject,
@@ -19,6 +30,7 @@ import {
   ADMIN_LOGIN,
   ADMIN_PASSWORD,
 } from "../../lib/constants";
+import Seo from "../../components/seo/Seo";
 import "./Admin.css";
 
 const EMPTY_PROJECT = {
@@ -49,8 +61,41 @@ const EMPTY_BLOG = {
   sort_order: 0,
 };
 
-const CATEGORIES = ["featured", "react", "api", "static"];
+const DEFAULT_CATEGORIES = ["featured", "react", "api", "static"];
+const CATEGORIES_STORAGE_KEY = "portfolio_project_categories";
 const LOCAL_ADMIN_KEY = "portfolio_admin_ok";
+
+function loadStoredCategories() {
+  try {
+    const raw = localStorage.getItem(CATEGORIES_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)
+      ? parsed.map((c) => String(c).trim().toLowerCase()).filter(Boolean)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveStoredCategories(list) {
+  try {
+    localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(list));
+  } catch {
+    /* ignore */
+  }
+}
+
+function normalizeCategorySlug(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/['"]/g, "")
+    .replace(/[^a-z0-9\u0400-\u04ff\s-]/gi, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 40);
+}
 
 function Admin() {
   const navigate = useNavigate();
@@ -65,7 +110,8 @@ function Admin() {
   const [authBusy, setAuthBusy] = useState(false);
   const [authHint, setAuthHint] = useState("");
 
-  const [tab, setTab] = useState("projects"); // projects | blogs
+  const [tab, setTab] = useState("dashboard"); // dashboard | projects | blogs | content
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -78,6 +124,11 @@ function Admin() {
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [projectPreview, setProjectPreview] = useState("");
   const [galleryPreviews, setGalleryPreviews] = useState([]);
+  const [categories, setCategories] = useState(() => {
+    const stored = loadStoredCategories();
+    return Array.from(new Set([...DEFAULT_CATEGORIES, ...stored]));
+  });
+  const [newCategory, setNewCategory] = useState("");
 
   // Blogs
   const [blogs, setBlogs] = useState([]);
@@ -136,31 +187,76 @@ function Admin() {
         throw error;
       }
       setDbReady(true);
-      setProjects(
-        (data || []).map((row) => ({
-          id: row.id,
-          name: row.name ?? "",
-          slug: row.slug ?? "",
-          info: row.info ?? "",
-          description: row.description ?? "",
-          img: row.img ?? "",
-          gallery: Array.isArray(row.gallery) ? row.gallery : [],
-          category: row.category ?? "featured",
-          tech: Array.isArray(row.tech) ? row.tech : [],
-          github: row.github ?? "",
-          live: row.live ?? "",
-          youtube_url: row.youtube_url ?? "",
-          price: row.price ?? "",
-          for_sale: Boolean(row.for_sale),
-          sort_order: row.sort_order ?? 0,
-        }))
-      );
+      const list = (data || []).map((row) => ({
+        id: row.id,
+        name: row.name ?? "",
+        slug: row.slug ?? "",
+        info: row.info ?? "",
+        description: row.description ?? "",
+        img: row.img ?? "",
+        gallery: Array.isArray(row.gallery) ? row.gallery : [],
+        category: row.category ?? "featured",
+        tech: Array.isArray(row.tech) ? row.tech : [],
+        github: row.github ?? "",
+        live: row.live ?? "",
+        youtube_url: row.youtube_url ?? "",
+        price: row.price ?? "",
+        for_sale: Boolean(row.for_sale),
+        sort_order: row.sort_order ?? 0,
+      }));
+      setProjects(list);
+      const fromProjects = list
+        .map((p) => normalizeCategorySlug(p.category))
+        .filter(Boolean);
+      setCategories((prev) => {
+        const next = Array.from(
+          new Set([...DEFAULT_CATEGORIES, ...prev, ...fromProjects])
+        );
+        const custom = next.filter((c) => !DEFAULT_CATEGORIES.includes(c));
+        saveStoredCategories(custom);
+        return next;
+      });
     } catch (err) {
       setMessage(err.message || "Loyihalar yuklash xatosi");
     } finally {
       setLoadingProjects(false);
     }
   }, []);
+
+  const addCategory = () => {
+    const slug = normalizeCategorySlug(newCategory);
+    if (!slug) {
+      setMessage("Kategoriya nomini yozing");
+      return;
+    }
+    if (categories.includes(slug)) {
+      setProjectForm((f) => ({ ...f, category: slug }));
+      setNewCategory("");
+      setMessage(`«${slug}» allaqachon bor — tanlandi`);
+      return;
+    }
+    setCategories((prev) => {
+      const next = [...prev, slug];
+      const custom = next.filter((c) => !DEFAULT_CATEGORIES.includes(c));
+      saveStoredCategories(custom);
+      return next;
+    });
+    setProjectForm((f) => ({ ...f, category: slug }));
+    setNewCategory("");
+    setMessage(`Kategoriya qo'shildi: ${slug}`);
+  };
+
+  const removeCustomCategory = (cat) => {
+    if (DEFAULT_CATEGORIES.includes(cat)) return;
+    setCategories((prev) => {
+      const next = prev.filter((c) => c !== cat);
+      saveStoredCategories(next.filter((c) => !DEFAULT_CATEGORIES.includes(c)));
+      return next;
+    });
+    setProjectForm((f) =>
+      f.category === cat ? { ...f, category: "featured" } : f
+    );
+  };
 
   const loadBlogs = useCallback(async () => {
     setLoadingBlogs(true);
@@ -565,31 +661,79 @@ function Admin() {
     }
   };
 
+  const saleCount = useMemo(
+    () => projects.filter((p) => p.for_sale).length,
+    [projects]
+  );
+  const publishedBlogs = useMemo(
+    () => blogs.filter((b) => b.published).length,
+    [blogs]
+  );
+
+  const navItems = [
+    { id: "dashboard", label: "Dashboard", icon: LuLayoutDashboard },
+    {
+      id: "content",
+      label: "Kontent",
+      icon: LuFileText,
+    },
+    {
+      id: "projects",
+      label: "Loyihalar",
+      icon: LuFolderKanban,
+      count: projects.length,
+    },
+    {
+      id: "blogs",
+      label: "Blog",
+      icon: LuNewspaper,
+      count: blogs.length,
+    },
+  ];
+
+  const pageTitle =
+    tab === "dashboard"
+      ? "Dashboard"
+      : tab === "content"
+        ? "Sayt kontenti"
+        : tab === "projects"
+          ? "Loyihalar"
+          : "Blog";
+
+  const goTab = (id) => {
+    setTab(id);
+    setSidebarOpen(false);
+  };
+
   if (authLoading) {
     return (
-      <div className="admin-page">
-        <p className="admin-muted">Yuklanmoqda…</p>
+      <div className="admin-shell admin-shell--auth">
+        <Seo title="Admin" path="/admin" noindex />
+        <div className="admin-auth-card">
+          <p className="admin-muted">Yuklanmoqda…</p>
+        </div>
       </div>
     );
   }
 
   if (!isSupabaseConfigured) {
     return (
-      <div className="admin-page">
-        <div className="admin-card">
+      <div className="admin-shell admin-shell--auth">
+        <Seo title="Admin" path="/admin" noindex />
+        <div className="admin-auth-card">
+          <div className="admin-auth-brand">KM</div>
           <h1>Sozlash kerak</h1>
           <p className="admin-muted">
             `.env` ga <code>VITE_SUPABASE_URL</code> va{" "}
             <code>VITE_SUPABASE_ANON_KEY</code> qo&apos;ying. SQL:{" "}
-            <code>supabase/schema.sql</code> yoki{" "}
-            <code>supabase/blogs_only.sql</code>
+            <code>supabase/SETUP_ALL.sql</code>
           </p>
           <button
             type="button"
-            className="admin-btn ghost"
+            className="admin-btn"
             onClick={() => navigate("/")}
           >
-            Orqaga
+            Saytga qaytish
           </button>
         </div>
       </div>
@@ -598,9 +742,11 @@ function Admin() {
 
   if (!isAuthed) {
     return (
-      <div className="admin-page">
-        <form className="admin-card admin-login" onSubmit={handleLogin}>
-          <h1>Admin</h1>
+      <div className="admin-shell admin-shell--auth">
+        <Seo title="Admin" path="/admin" noindex />
+        <form className="admin-auth-card" onSubmit={handleLogin}>
+          <div className="admin-auth-brand">KM</div>
+          <h1>Admin kirish</h1>
           <p className="admin-muted admin-login-hint">
             Login: <strong>admin</strong> · Parol: <strong>kamoliddin</strong>
           </p>
@@ -628,11 +774,11 @@ function Admin() {
           </label>
           {authError && <p className="admin-error">{authError}</p>}
           {authHint && <p className="admin-hint">{authHint}</p>}
-          <button type="submit" className="admin-btn" disabled={authBusy}>
+          <button type="submit" className="admin-btn admin-btn-block" disabled={authBusy}>
             {authBusy ? "…" : "Kirish"}
           </button>
-          <Link to="/" className="admin-back">
-            ←
+          <Link to="/" className="admin-auth-back">
+            ← Saytga qaytish
           </Link>
         </form>
       </div>
@@ -640,70 +786,253 @@ function Admin() {
   }
 
   return (
-    <div className="admin-page">
-      <header className="admin-header">
-        <div>
-          <h1>Admin panel</h1>
-          <p className="admin-muted">
-            {session?.user?.email || "local admin"}
-            {!session && " · Supabase session yo'q (user yarating)"}
-          </p>
+    <div className={`admin-shell ${sidebarOpen ? "sidebar-open" : ""}`}>
+      <Seo title="Admin Dashboard" path="/admin" noindex />
+
+      {sidebarOpen && (
+        <button
+          type="button"
+          className="admin-sidebar-backdrop"
+          aria-label="Yopish"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-top">
+          <div className="admin-sidebar-brand">
+            <span className="admin-sidebar-logo">KM</span>
+            <div>
+              <strong>Admin</strong>
+              <span>Portfolio CMS</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            className="admin-sidebar-close"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Yopish"
+          >
+            <LuX />
+          </button>
         </div>
-        <div className="admin-header-actions">
-          <Link to="/blog" className="admin-btn ghost">
-            Blog
-          </Link>
-          <Link to="/" className="admin-btn ghost">
-            Sayt
+
+        <nav className="admin-sidebar-nav" aria-label="Admin navigatsiya">
+          {navItems.map(({ id, label, icon: Icon, count }) => (
+            <button
+              key={id}
+              type="button"
+              className={`admin-nav-item ${tab === id ? "active" : ""}`}
+              onClick={() => goTab(id)}
+            >
+              <Icon />
+              <span>{label}</span>
+              {typeof count === "number" && (
+                <em className="admin-nav-count">{count}</em>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="admin-sidebar-foot">
+          <Link to="/" className="admin-nav-item" target="_blank" rel="noreferrer">
+            <LuGlobe />
+            <span>Saytni ochish</span>
           </Link>
           <button
             type="button"
-            className="admin-btn ghost"
+            className="admin-nav-item admin-nav-item--danger"
             onClick={handleLogout}
           >
-            Chiqish
+            <LuLogOut />
+            <span>Chiqish</span>
           </button>
         </div>
-      </header>
+      </aside>
 
-      <div className="admin-tabs">
-        <button
-          type="button"
-          className={`admin-tab ${tab === "projects" ? "active" : ""}`}
-          onClick={() => setTab("projects")}
-        >
-          Loyihalar ({projects.length})
-        </button>
-        <button
-          type="button"
-          className={`admin-tab ${tab === "blogs" ? "active" : ""}`}
-          onClick={() => setTab("blogs")}
-        >
-          Blog ({blogs.length})
-        </button>
-      </div>
+      <div className="admin-main">
+        <header className="admin-topbar">
+          <div className="admin-topbar-left">
+            <button
+              type="button"
+              className="admin-icon-btn"
+              onClick={() => setSidebarOpen(true)}
+              aria-label="Menu"
+            >
+              <LuMenu />
+            </button>
+            <div>
+              <h1>{pageTitle}</h1>
+              <p className="admin-muted">
+                {session?.user?.email || "local admin"}
+                {!session && " · local session"}
+              </p>
+            </div>
+          </div>
+          <div className="admin-topbar-right">
+            <Link to="/blog" className="admin-btn ghost sm">
+              Blog
+            </Link>
+            <Link to="/" className="admin-btn ghost sm" target="_blank">
+              <LuGlobe /> Sayt
+            </Link>
+            <button
+              type="button"
+              className="admin-btn ghost sm"
+              onClick={handleLogout}
+            >
+              <LuLogOut /> Chiqish
+            </button>
+          </div>
+        </header>
 
-      {dbReady === false && (
-        <div className="admin-setup-banner">
-          <strong>Supabase jadvallari yo&apos;q</strong>
-          <p>
-            SQL Editor da shu faylni to&apos;liq ishga tushiring:{" "}
-            <code>supabase/SETUP_ALL.sql</code>
-          </p>
-          <p className="admin-muted">
-            Keyin sahifani yangilang — loyiha/blog qo&apos;shish ishlaydi.
-          </p>
-        </div>
-      )}
+        <div className="admin-content">
+          {dbReady === false && (
+            <div className="admin-setup-banner">
+              <strong>Supabase jadvallari yo&apos;q</strong>
+              <p>
+                SQL Editor da: <code>supabase/SETUP_ALL.sql</code>
+              </p>
+            </div>
+          )}
 
-      {message && <p className="admin-toast">{message}</p>}
+          {message && (
+            <div className="admin-toast" role="status">
+              {message}
+              <button
+                type="button"
+                className="admin-toast-close"
+                onClick={() => setMessage("")}
+                aria-label="Yopish"
+              >
+                ×
+              </button>
+            </div>
+          )}
 
-      {tab === "projects" && (
+          {tab === "dashboard" && (
+            <section className="admin-dashboard">
+              <div className="admin-stats">
+                <button
+                  type="button"
+                  className="admin-stat-card"
+                  onClick={() => goTab("projects")}
+                >
+                  <span className="admin-stat-label">Loyihalar</span>
+                  <strong className="admin-stat-value">{projects.length}</strong>
+                  <span className="admin-stat-hint">Barcha portfolio</span>
+                </button>
+                <button
+                  type="button"
+                  className="admin-stat-card"
+                  onClick={() => goTab("projects")}
+                >
+                  <span className="admin-stat-label">Sotuvda</span>
+                  <strong className="admin-stat-value">{saleCount}</strong>
+                  <span className="admin-stat-hint">for sale</span>
+                </button>
+                <button
+                  type="button"
+                  className="admin-stat-card"
+                  onClick={() => goTab("blogs")}
+                >
+                  <span className="admin-stat-label">Bloglar</span>
+                  <strong className="admin-stat-value">{blogs.length}</strong>
+                  <span className="admin-stat-hint">
+                    {publishedBlogs} nashr qilingan
+                  </span>
+                </button>
+                <div className="admin-stat-card">
+                  <span className="admin-stat-label">Kategoriyalar</span>
+                  <strong className="admin-stat-value">{categories.length}</strong>
+                  <span className="admin-stat-hint">default + custom</span>
+                </div>
+              </div>
+
+              <div className="admin-dash-grid">
+                <div className="admin-card">
+                  <div className="admin-card-head">
+                    <h2>Tezkor amallar</h2>
+                  </div>
+                  <div className="admin-quick-actions">
+                    <button
+                      type="button"
+                      className="admin-btn"
+                      onClick={() => goTab("content")}
+                    >
+                      Kontent tahrirlash
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-btn ghost"
+                      onClick={() => goTab("projects")}
+                    >
+                      + Yangi loyiha
+                    </button>
+                    <button
+                      type="button"
+                      className="admin-btn ghost"
+                      onClick={() => goTab("blogs")}
+                    >
+                      + Yangi blog
+                    </button>
+                    <Link to="/" className="admin-btn ghost" target="_blank">
+                      Saytni ko&apos;rish
+                    </Link>
+                  </div>
+                </div>
+                <div className="admin-card">
+                  <div className="admin-card-head">
+                    <h2>So&apos;nggi loyihalar</h2>
+                    <button
+                      type="button"
+                      className="admin-link-btn"
+                      onClick={() => goTab("projects")}
+                    >
+                      Hammasi
+                    </button>
+                  </div>
+                  {projects.length === 0 ? (
+                    <p className="admin-muted">Hali loyiha yo&apos;q.</p>
+                  ) : (
+                    <ul className="admin-list admin-list--compact">
+                      {projects.slice(0, 5).map((p) => (
+                        <li key={p.id} className="admin-list-item">
+                          <div className="admin-list-thumb">
+                            {p.img ? (
+                              <img src={p.img} alt="" />
+                            ) : (
+                              <span>—</span>
+                            )}
+                          </div>
+                          <div className="admin-list-meta">
+                            <strong>{p.name}</strong>
+                            <span>
+                              {p.category}
+                              {p.for_sale ? " · sale" : ""}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
+          {tab === "content" && (
+            <ContentEditor onMessage={setMessage} />
+          )}
+
+          {tab === "projects" && (
         <>
           <form className="admin-card admin-form" onSubmit={handleProjectSubmit}>
-            <h2>
-              {editingProjectId ? "Loyihani tahrirlash" : "Yangi loyiha"}
-            </h2>
+            <div className="admin-card-head">
+              <h2>
+                {editingProjectId ? "Loyihani tahrirlash" : "Yangi loyiha"}
+              </h2>
+            </div>
             <div className="admin-grid">
               <label>
                 Nom *
@@ -724,15 +1053,67 @@ function Admin() {
               <label>
                 Kategoriya
                 <select
-                  value={projectForm.category}
+                  value={
+                    categories.includes(projectForm.category)
+                      ? projectForm.category
+                      : projectForm.category || "featured"
+                  }
                   onChange={(e) => onProjectChange("category", e.target.value)}
                 >
-                  {CATEGORIES.map((c) => (
+                  {!categories.includes(projectForm.category) &&
+                    projectForm.category && (
+                      <option value={projectForm.category}>
+                        {projectForm.category}
+                      </option>
+                    )}
+                  {categories.map((c) => (
                     <option key={c} value={c}>
                       {c}
                     </option>
                   ))}
                 </select>
+              </label>
+              <label className="full admin-category-add">
+                Yangi kategoriya
+                <div className="admin-category-row">
+                  <input
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    placeholder="masalan: vue, mobile, crm"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addCategory();
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    className="admin-btn sm"
+                    onClick={addCategory}
+                  >
+                    Qo&apos;shish
+                  </button>
+                </div>
+                {categories.filter((c) => !DEFAULT_CATEGORIES.includes(c))
+                  .length > 0 && (
+                  <div className="admin-category-chips">
+                    {categories
+                      .filter((c) => !DEFAULT_CATEGORIES.includes(c))
+                      .map((c) => (
+                        <span key={c} className="admin-category-chip">
+                          {c}
+                          <button
+                            type="button"
+                            aria-label={`${c} o'chirish`}
+                            onClick={() => removeCustomCategory(c)}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                  </div>
+                )}
               </label>
               <label>
                 Tartib
@@ -871,10 +1252,12 @@ function Admin() {
           </form>
 
           <section className="admin-card">
-            <h2>
-              Loyihalar{" "}
-              {loadingProjects ? "…" : `(${projects.length})`}
-            </h2>
+            <div className="admin-card-head">
+              <h2>
+                Loyihalar{" "}
+                {loadingProjects ? "…" : `(${projects.length})`}
+              </h2>
+            </div>
             {projects.length === 0 && !loadingProjects && (
               <p className="admin-muted">Hali loyiha yo&apos;q.</p>
             )}
@@ -925,7 +1308,9 @@ function Admin() {
       {tab === "blogs" && (
         <>
           <form className="admin-card admin-form" onSubmit={handleBlogSubmit}>
-            <h2>{editingBlogId ? "Blogni tahrirlash" : "Yangi blog"}</h2>
+            <div className="admin-card-head">
+              <h2>{editingBlogId ? "Blogni tahrirlash" : "Yangi blog"}</h2>
+            </div>
             <div className="admin-grid">
               <label className="full">
                 Sarlavha *
@@ -1029,9 +1414,11 @@ function Admin() {
           </form>
 
           <section className="admin-card">
-            <h2>
-              Bloglar {loadingBlogs ? "…" : `(${blogs.length})`}
-            </h2>
+            <div className="admin-card-head">
+              <h2>
+                Bloglar {loadingBlogs ? "…" : `(${blogs.length})`}
+              </h2>
+            </div>
             {blogs.length === 0 && !loadingBlogs && (
               <p className="admin-muted">
                 Hali blog yo&apos;q. SQL:{" "}
@@ -1086,6 +1473,8 @@ function Admin() {
           </section>
         </>
       )}
+        </div>
+      </div>
     </div>
   );
 }

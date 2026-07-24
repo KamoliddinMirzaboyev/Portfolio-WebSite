@@ -1,0 +1,7 @@
+# Kamoliddin Mirzaboyev Portfolio
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin/
+
+Sitemap: https://kamoliddinmirzaboyev.vercel.app/sitemap.xml

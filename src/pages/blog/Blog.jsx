@@ -6,6 +6,7 @@ import { fetchBlogs } from "../../lib/blogs";
 import { useLang } from "../../i18n/LanguageContext";
 import Glass from "../../components/ui/Glass";
 import "../../components/ui/Glass.css";
+import Seo from "../../components/seo/Seo";
 import "./Blog.css";
 
 const ease = [0.16, 1, 0.3, 1];
@@ -28,6 +29,9 @@ function Blog() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const blogDesc =
+    "Kamoliddin Mirzaboyev blog — Frontend, React, TypeScript, web dasturlash, loyihalar va tajriba haqida maqolalar.";
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -45,6 +49,12 @@ function Blog() {
 
   return (
     <div className="blogPage">
+      <Seo
+        title="Blog — Frontend, React, TypeScript"
+        description={blogDesc}
+        path="/blog"
+        keywords="Kamoliddin Mirzaboyev blog, Frontend blog, React maqola, TypeScript, web dasturlash"
+      />
       <section className="blog-hero">
         <div className="container">
           <motion.div

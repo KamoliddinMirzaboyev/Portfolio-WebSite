@@ -4,6 +4,8 @@ import { motion } from "framer-motion";
 import { LuArrowLeft, LuExternalLink } from "react-icons/lu";
 import { fetchBlogBySlugOrId } from "../../lib/blogs";
 import { useLang } from "../../i18n/LanguageContext";
+import Seo from "../../components/seo/Seo";
+import { blogPostJsonLd } from "../../lib/seo";
 import "./Blog.css";
 
 const ease = [0.16, 1, 0.3, 1];
@@ -45,6 +47,7 @@ function BlogPost() {
   if (loading) {
     return (
       <div className="blogPage blog-post-page">
+        <Seo title="Blog" path={`/blog/${slug || ""}`} noindex />
         <div className="container">
           <p className="blog-empty">{b.loading}</p>
         </div>
@@ -55,6 +58,7 @@ function BlogPost() {
   if (!post) {
     return (
       <div className="blogPage blog-post-page">
+        <Seo title="Maqola topilmadi" path={`/blog/${slug || ""}`} noindex />
         <div className="container">
           <p className="blog-empty">{b.notFound}</p>
           <Link to="/blog" className="blog-back-link">
@@ -72,6 +76,18 @@ function BlogPost() {
 
   return (
     <div className="blogPage blog-post-page">
+      <Seo
+        title={post.title}
+        description={
+          post.excerpt ||
+          `${post.title} — Kamoliddin Mirzaboyev blog, Frontend dasturchi.`
+        }
+        path={`/blog/${post.slug || post.id}`}
+        image={post.cover_image || post.image}
+        type="article"
+        keywords={`${post.title}, Kamoliddin Mirzaboyev, Frontend, React`}
+        jsonLd={blogPostJsonLd(post)}
+      />
       <article className="container blog-article">
         <motion.div
           initial={{ opacity: 0, y: 16 }}

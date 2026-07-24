@@ -8,6 +8,36 @@ export const PHONE_DISPLAY = "+998 88 956 38 48";
 export const LINKEDIN_URL =
   "https://www.linkedin.com/in/kamoliddin-mirzaboyev-8226a4329/";
 
+/** SEO — Vercel domain yoki custom domain (.env da o'zgartiring) */
+export const SITE_URL = (
+  import.meta.env.VITE_SITE_URL || "https://kamoliddinmirzaboyev.vercel.app"
+).replace(/\/$/, "");
+export const SITE_NAME = "Kamoliddin Mirzaboyev";
+export const SITE_TITLE =
+  "Kamoliddin Mirzaboyev | Frontend Developer — React, TypeScript, Portfolio";
+export const SITE_DESCRIPTION =
+  "Kamoliddin Mirzaboyev — Farg'ona, O'zbekiston Frontend dasturchi. React, TypeScript, Vite. Portfolio: web loyihalar, yotoqxona CRM, e-commerce, landing. Frontend developer portfolio.";
+export const SITE_KEYWORDS = [
+  "Kamoliddin Mirzaboyev",
+  "Kamoliddin Mirzaboyev Frontend",
+  "Frontend Developer",
+  "Frontend dasturchi",
+  "React developer",
+  "TypeScript developer",
+  "portfolio",
+  "web dasturchi",
+  "yotoqxona",
+  "yotoqxona CRM",
+  "JoyBor",
+  "loyiha",
+  "web loyiha",
+  "Vite",
+  "O'zbekiston Frontend",
+  "Farg'ona dasturchi",
+  "Kamoliddinmirzaboyev",
+].join(", ");
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/mixel.png`;
+
 /** Web3Forms public access key (client-side OK) */
 export const WEB3FORMS_ACCESS_KEY =
   import.meta.env.VITE_WEB3FORMS_KEY ||

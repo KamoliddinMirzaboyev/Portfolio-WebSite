@@ -1,0 +1,24 @@
+{
+  "name": "Kamoliddin Mirzaboyev — Frontend Developer",
+  "short_name": "Kamoliddin",
+  "description": "Frontend dasturchi portfolio. React, TypeScript, web loyihalar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050506",
+  "theme_color": "#050506",
+  "lang": "uz",
+  "icons": [
+    {
+      "src": "/reacticon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/mixel.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

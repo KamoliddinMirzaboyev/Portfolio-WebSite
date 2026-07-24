@@ -8,6 +8,7 @@ import { MdOutlineTranslate } from "react-icons/md";
 import { HiOutlineCodeBracket } from "react-icons/hi2";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { fetchProjects } from "../../lib/projects";
+import { fetchSiteContent } from "../../lib/siteContent";
 import { useLang } from "../../i18n/LanguageContext";
 import {
   EMAIL,
@@ -15,12 +16,17 @@ import {
   GITHUB_URL,
   PHONE,
   PHONE_DISPLAY,
+  SITE_DESCRIPTION,
+  SITE_KEYWORDS,
+  SITE_TITLE,
   TELEGRAM_URL,
 } from "../../lib/constants";
 import { Link } from "react-router-dom";
 import ContactForm from "../../components/contact/ContactForm";
 import Glass from "../../components/ui/Glass";
 import "../../components/ui/Glass.css";
+import Seo from "../../components/seo/Seo";
+import { personJsonLd, websiteJsonLd } from "../../lib/seo";
 
 const ease = [0.16, 1, 0.3, 1];
 
@@ -128,15 +134,20 @@ function Home() {
   const { t, locale } = useLang();
   const [portfolioDB, setPortfolioDB] = useState([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
+  const [site, setSite] = useState(null);
   const [value, setValue] = useState("featured");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       setProjectsLoading(true);
-      const list = await fetchProjects();
+      const [list, content] = await Promise.all([
+        fetchProjects(),
+        fetchSiteContent(),
+      ]);
       if (!cancelled) {
         setPortfolioDB(list);
+        setSite(content);
         setProjectsLoading(false);
       }
     })();
@@ -145,18 +156,95 @@ function Home() {
     };
   }, []);
 
-  const skills = t.skills.items.map((item, i) => ({
+  const hero = site?.hero || t.hero;
+  const about = site?.about || t.about;
+  const profile = site?.profile || {
+    name: "Kamoliddin Mirzaboyev",
+    initials: "KM",
+    role: "Frontend · React · TypeScript",
+    tags: ["Farg'ona", "O'zbekiston", t.about.available],
+  };
+  const experienceBlock = site?.experience || t.experience;
+  const skillsBlock = site?.skills || t.skills;
+  const educationBlock = site?.education || t.education;
+  const portfolioMeta = site?.portfolio_meta || t.portfolio;
+  const contactMeta = site?.contact_meta || t.contact;
+
+  const skills = (skillsBlock.items || []).map((item, i) => ({
     ...item,
     accent: skillMeta[i]?.accent || "violet",
-    icons: skillMeta[i]?.icons || [],
+    icons: skillMeta[i % skillMeta.length]?.icons || skillMeta[0].icons,
   }));
 
-  const experiences = t.experience.items;
-  const education = t.education.items;
-  const filtered = portfolioDB.filter((item) => item.category === value);
+  const experiences = experienceBlock.items || [];
+  const education = educationBlock.items || [];
+  const heroStats =
+    hero.stats?.length > 0
+      ? hero.stats
+      : [
+          { n: "1+", l: t.hero.statExp },
+          { n: "10+", l: t.hero.statProjects },
+          { n: "4.7", l: t.hero.statGpa },
+        ];
+
+  const categoryTabs = useMemo(() => {
+    const base = ["featured", "react", "api", "static"];
+    const fromDb = portfolioDB
+      .map((p) => String(p.category || "").trim().toLowerCase())
+      .filter(Boolean);
+    const customStored = (() => {
+      try {
+        const raw = localStorage.getItem("portfolio_project_categories");
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed)
+          ? parsed.map((c) => String(c).trim().toLowerCase()).filter(Boolean)
+          : [];
+      } catch {
+        return [];
+      }
+    })();
+    const all = Array.from(new Set([...base, ...fromDb, ...customStored]));
+    // Faqat loyihasi bor yoki default tablar
+    return all.filter(
+      (c) =>
+        base.includes(c) ||
+        portfolioDB.some(
+          (p) => String(p.category || "").trim().toLowerCase() === c
+        )
+    );
+  }, [portfolioDB]);
+
+  useEffect(() => {
+    if (!categoryTabs.length) return;
+    if (!categoryTabs.includes(value)) {
+      setValue(categoryTabs[0]);
+    }
+  }, [categoryTabs, value]);
+
+  const categoryLabel = (cat) => {
+    const labels = t.portfolio || {};
+    if (labels[cat]) return labels[cat];
+    return cat
+      .split("-")
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  };
+
+  const filtered = portfolioDB.filter(
+    (item) =>
+      String(item.category || "").trim().toLowerCase() ===
+      String(value).trim().toLowerCase()
+  );
 
   return (
     <div className="homePage" key={locale}>
+      <Seo
+        title={SITE_TITLE}
+        description={SITE_DESCRIPTION}
+        path="/"
+        keywords={SITE_KEYWORDS}
+        jsonLd={[personJsonLd(), websiteJsonLd()]}
+      />
       <section className="hero" id="home">
         <div className="hero-glow" />
         <div className="container hero-inner">
@@ -167,11 +255,11 @@ function Home() {
             transition={{ duration: 0.9, ease }}
           >
             <span className="pulse-dot" />
-            <p>{t.hero.badge}</p>
+            <p>{hero.badge}</p>
           </motion.div>
 
           <h1 className="mainText">
-            <SplitText text="Kamoliddin Mirzaboyev" />
+            <SplitText text={profile.name || "Kamoliddin Mirzaboyev"} />
           </h1>
 
           <motion.h2
@@ -180,7 +268,7 @@ function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.75, ease }}
           >
-            {t.hero.job}
+            {hero.job}
           </motion.h2>
 
           <motion.p
@@ -189,7 +277,7 @@ function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.9, delay: 0.95, ease }}
           >
-            {t.hero.info}
+            {hero.info}
           </motion.p>
 
           <motion.div
@@ -205,7 +293,8 @@ function Home() {
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.35, ease }}
             >
-              {t.hero.projectsBtn} <i className="fas fa-arrow-right" />
+              {hero.projectsBtn || t.hero.projectsBtn}{" "}
+              <i className="fas fa-arrow-right" />
             </motion.a>
             <motion.a
               href="#contact"
@@ -214,7 +303,8 @@ function Home() {
               whileTap={{ scale: 0.98 }}
               transition={{ duration: 0.35, ease }}
             >
-              {t.hero.contactBtn} <i className="fa-solid fa-share" />
+              {hero.contactBtn || t.hero.contactBtn}{" "}
+              <i className="fa-solid fa-share" />
             </motion.a>
           </motion.div>
 
@@ -224,13 +314,9 @@ function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 1.35, duration: 1, ease }}
           >
-            {[
-              { n: "1+", l: t.hero.statExp },
-              { n: "10+", l: t.hero.statProjects },
-              { n: "4.7", l: t.hero.statGpa },
-            ].map((s, i) => (
+            {heroStats.map((s, i) => (
               <motion.div
-                key={s.l}
+                key={`${s.n}-${s.l}-${i}`}
                 className="stat-chip"
                 initial={{ opacity: 0, y: 14 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -258,13 +344,15 @@ function Home() {
               <div className="about-card-glow" />
               <Glass className="lg-about" borderRadius={24} blur={0.5}>
                 <div className="about-card about-card-inner">
-                  <div className="about-avatar">KM</div>
-                  <h3>Kamoliddin Mirzaboyev</h3>
-                  <p>Frontend · React · TypeScript</p>
+                  <div className="about-avatar">
+                    {profile.initials || "KM"}
+                  </div>
+                  <h3>{profile.name}</h3>
+                  <p>{profile.role}</p>
                   <div className="about-tags">
-                    <span>Farg&apos;ona</span>
-                    <span>O&apos;zbekiston</span>
-                    <span>{t.about.available}</span>
+                    {(profile.tags || []).map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
                   </div>
                 </div>
               </Glass>
@@ -278,7 +366,7 @@ function Home() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.8, ease }}
               >
-                <p>{t.about.badge}</p>
+                <p>{about.badge}</p>
               </motion.div>
               <motion.h2
                 className="sectionTitle"
@@ -287,7 +375,7 @@ function Home() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.9, delay: 0.08, ease }}
               >
-                {t.about.title}
+                {about.title}
               </motion.h2>
               <motion.p
                 className="infoText"
@@ -296,7 +384,7 @@ function Home() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.9, delay: 0.16, ease }}
               >
-                {t.about.p1}
+                {about.p1}
               </motion.p>
               <motion.p
                 className="infoText"
@@ -305,7 +393,7 @@ function Home() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.9, delay: 0.26, ease }}
               >
-                {t.about.p2}
+                {about.p2}
               </motion.p>
             </div>
           </div>
@@ -320,7 +408,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease }}
             >
-              <p>{t.experience.badge}</p>
+              <p>{experienceBlock.badge}</p>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -329,7 +417,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.9, ease }}
             >
-              {t.experience.title}
+              {experienceBlock.title}
             </motion.h2>
 
             <div className="timeline">
@@ -380,7 +468,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease }}
             >
-              <p>{t.skills.badge}</p>
+              <p>{skillsBlock.badge}</p>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -389,7 +477,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.9, ease }}
             >
-              {t.skills.title}
+              {skillsBlock.title}
             </motion.h2>
 
             <div className="skillsBlock">
@@ -443,7 +531,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease }}
             >
-              <p>{t.portfolio.badge}</p>
+              <p>{portfolioMeta.badge}</p>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -452,7 +540,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.9, ease }}
             >
-              {t.portfolio.title}
+              {portfolioMeta.title}
             </motion.h2>
             <motion.p
               className="projectInfo lead"
@@ -461,7 +549,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.1, ease }}
             >
-              {t.portfolio.lead}
+              {portfolioMeta.lead}
             </motion.p>
 
             <motion.div
@@ -472,16 +560,15 @@ function Home() {
               transition={{ duration: 0.8, ease }}
             >
               <Tabs
-                value={value}
+                value={categoryTabs.includes(value) ? value : categoryTabs[0] || false}
                 onChange={(_, v) => setValue(v)}
                 centered
                 variant="scrollable"
                 scrollButtons="auto"
               >
-                <Tab label={t.portfolio.featured} value="featured" />
-                <Tab label={t.portfolio.react} value="react" />
-                <Tab label={t.portfolio.api} value="api" />
-                <Tab label={t.portfolio.static} value="static" />
+                {categoryTabs.map((cat) => (
+                  <Tab key={cat} label={categoryLabel(cat)} value={cat} />
+                ))}
               </Tabs>
             </motion.div>
 
@@ -572,7 +659,7 @@ function Home() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
-              <p>{t.education.badge}</p>
+              <p>{educationBlock.badge}</p>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -580,7 +667,7 @@ function Home() {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
             >
-              {t.education.title}
+              {educationBlock.title}
             </motion.h2>
 
             <div className="edu-grid">
@@ -615,7 +702,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease }}
             >
-              <p>{t.contact.badge}</p>
+              <p>{contactMeta.badge}</p>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -624,7 +711,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.9, ease }}
             >
-              {t.contact.title}
+              {contactMeta.title}
             </motion.h2>
             <motion.p
               className="contact-lead"
@@ -633,7 +720,7 @@ function Home() {
               viewport={{ once: true }}
               transition={{ duration: 0.8, delay: 0.08, ease }}
             >
-              {t.contact.lead}
+              {contactMeta.lead}
             </motion.p>
 
             <motion.div
