@@ -136,7 +136,7 @@ function Home() {
   const [portfolioDB, setPortfolioDB] = useState([]);
   const [projectsLoading, setProjectsLoading] = useState(true);
   const [site, setSite] = useState(null);
-  const [value, setValue] = useState("featured");
+  const [value, setValue] = useState("all");
 
   useEffect(() => {
     let cancelled = false;
@@ -205,14 +205,14 @@ function Home() {
     })();
     // Faqat haqiqiy ishlatiladigan / saqlangan kategoriyalar
     const all = Array.from(new Set([...stored, ...fromDb]));
-    if (!all.length) return ["featured"];
-    // Avval loyihasi borlar, keyin qolgani
     const withProjects = all.filter((c) =>
       portfolioDB.some(
         (p) => String(p.category || "").trim().toLowerCase() === c
       )
     );
-    return withProjects.length ? withProjects : all;
+    const valid = withProjects.length ? withProjects : all;
+    // Har doim "all" birinchi tab bo'lib turadi
+    return ["all", ...valid.filter((c) => c !== "all")];
   }, [portfolioDB]);
 
   useEffect(() => {
@@ -223,6 +223,7 @@ function Home() {
   }, [categoryTabs, value]);
 
   const categoryLabel = (cat) => {
+    if (cat === "all") return t.portfolio?.all || "Barchasi";
     const labels = t.portfolio || {};
     if (labels[cat]) return labels[cat];
     return cat
@@ -231,11 +232,13 @@ function Home() {
       .join(" ");
   };
 
-  const filtered = portfolioDB.filter(
-    (item) =>
+  const filtered = portfolioDB.filter((item) => {
+    if (value === "all") return true;
+    return (
       String(item.category || "").trim().toLowerCase() ===
       String(value).trim().toLowerCase()
-  );
+    );
+  });
 
   return (
     <div className="homePage" key={locale}>
