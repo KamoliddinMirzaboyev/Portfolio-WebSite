@@ -14,6 +14,21 @@ function slugify(text) {
 /** Standart loyihalar — saytda darhol ko'rinadi, Supabase bo'lmasa ham to'liq ishlaydi */
 export const DEFAULT_PROJECTS = [
   {
+    id: "bg-remover",
+    slug: "bg-remover",
+    name: "BG Remover — Onlayn AI Fon Tozalagich",
+    category: "startup",
+    info: "100% brauzerda ishlovchi xavfsiz AI fon tozalagich: rasm serverga yuklanmaydi, ro'yxatdan o'tishsiz shaffof PNG yuklab olish.",
+    description:
+      "BG Remover — rasmlardan orqa fonni 1 soniyada avtomatik va sifatli olib tashlaydigan zamonaviy onlayn AI platformasi.\n\nAsosiy imkoniyatlar:\n• 100% Client-Side Private AI — barcha ishlov berish to'g'ridan-to'g'ri foydalanuvchi brauzerida bajariladi, rasmlar hech qanday tashqi serverga yuborilmaydi (to'liq maxfiylik)\n• Tezkor va Yuqori sifat rejimlari\n• Interaktiv Studio — «Oldin / Keyin» slayd taqqoslashi, chetlar yumshoqligini sozlash\n• Shaffof fon yoki yangi rangli fonlarni oson almashtirish\n• Yuqori aniqlikdagi HD PNG formatida bir zumda saqlab olish\n• Ro'yxatdan o'tmasdan va limitsiz bepul foydalanish.",
+    img: "/bgremover.png",
+    gallery: ["/bgremover.png", "/bgremover-studio.png"],
+    tech: ["React", "Client-Side AI", "Canvas API", "PWA", "Vite", "Tailwind CSS"],
+    github: "",
+    live: "https://bgremover.webportfolio.uz/",
+    sort_order: 0,
+  },
+  {
     id: "avazbek-avtotest",
     slug: "avazbek-avtotest",
     name: "Avazbek Avtotest",
@@ -89,6 +104,27 @@ export const DEFAULT_PROJECTS = [
     sort_order: 5,
   },
   {
+    id: "vocabify",
+    slug: "vocabify",
+    name: "Vocabify",
+    category: "featured",
+    info: "Ingliz tili so'zlarini samarali yodlash uchun interaktiv platforma: o'z to'plamlaringizni yarating, viktorinalar orqali mustahkamlang.",
+    description:
+      "Vocabify — ingliz tili (yoki istalgan til) so'z boyligini tizimli ravishda oshirish uchun mo'ljallangan onlayn lug'at va o'rganish platformasi.\n\nAsosiy imkoniyatlar:\n• Shaxsiy so'z to'plamlarini (kolleksiyalarni) yaratish va boshqarish\n• Tarjimani topish uslubidagi interaktiv viktorina (quiz) rejimi\n• So'zlarni audio orqali eshitib yodlash (talaffuzni tinglash)\n• Kunlik streak, aniqlik foizi va o'zlashtirish statistikasi bilan progress kuzatuvi\n• Tayyor to'plamlarni import qilish va 1000+ so'zni bir joyda saqlash imkoniyati.",
+    img: "/vocabify-1.png",
+    gallery: [
+      "/vocabify-1.png",
+      "/vocabify-2.png",
+      "/vocabify-3.png",
+      "/vocabify-4.png",
+      "/vocabify-5.png",
+    ],
+    tech: ["React", "Vite", "Supabase", "REST API", "PWA"],
+    github: "",
+    live: "https://vocabify.webportfolio.uz/",
+    sort_order: 6,
+  },
+  {
     id: "mixel-ecommerse",
     slug: "mixel-ecommerse",
     name: "Mixel E-Commerce",
@@ -101,7 +137,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["React", "Restful API", "SwiperJs"],
     github: "https://github.com/Kamoliddinmirzaboyev05/Mixel-E-Commerse-",
     live: "https://mixel-os.netlify.app/",
-    sort_order: 6,
+    sort_order: 7,
   },
   {
     id: "exclusive-ecommerse",
@@ -116,7 +152,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["React", "Restful API", "SwiperJs"],
     github: "https://github.com/Kamoliddinmirzaboyev05/Exclusive-E-Commerse-Site",
     live: "https://exclusive-ecommerse-site.netlify.app/",
-    sort_order: 7,
+    sort_order: 8,
   },
   {
     id: "greenshop",
@@ -131,7 +167,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["React", "Local Storage", "SwiperJs"],
     github: "https://github.com/Kamoliddinmirzaboyev05/GreenShop",
     live: "https://greenshop-mkm.netlify.app/",
-    sort_order: 8,
+    sort_order: 9,
   },
   {
     id: "finsweet",
@@ -146,7 +182,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["React", "Multi Page", "CSS3"],
     github: "https://github.com/Kamoliddinmirzaboyev05/Finsweet-React.git",
     live: "https://finsweet-react-mkm.vercel.app/",
-    sort_order: 9,
+    sort_order: 10,
   },
   {
     id: "planto",
@@ -161,7 +197,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["React", "Drop Shadow", "Landing Page"],
     github: "https://github.com/Kamoliddinmirzaboyev05/Planto-First-React-",
     live: "https://planto-firt-react-mkm.netlify.app/",
-    sort_order: 10,
+    sort_order: 11,
   },
   {
     id: "devfinder",
@@ -176,7 +212,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["React", "GitHub REST API", "Dark/Light Mode"],
     github: "",
     live: "https://devfinder-github-mkm.netlify.app/",
-    sort_order: 11,
+    sort_order: 12,
   },
   {
     id: "taqvim",
@@ -191,7 +227,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["HTML & CSS", "JavaScript", "Aladhan API"],
     github: "https://github.com/Kamoliddinmirzaboyev05/Namoz-Vaqtlari-APP",
     live: "https://taqvim-mkm.netlify.app/",
-    sort_order: 12,
+    sort_order: 13,
   },
   {
     id: "image-generator",
@@ -206,7 +242,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["JavaScript", "Unsplash API", "Local Storage"],
     github: "",
     live: "",
-    sort_order: 13,
+    sort_order: 14,
   },
   {
     id: "rolex",
@@ -221,7 +257,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["HTML & CSS", "JavaScript", "Dark - Light Mode"],
     github: "https://github.com/Kamoliddinmirzaboyev05/Rolex",
     live: "https://rolex-mkm.netlify.app/",
-    sort_order: 14,
+    sort_order: 15,
   },
   {
     id: "todo-app",
@@ -236,7 +272,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["HTML & CSS", "JavaScript", "Local Storage"],
     github: "https://github.com/Kamoliddinmirzaboyev05/To-Do-App",
     live: "https://todolist-mkm.netlify.app/",
-    sort_order: 15,
+    sort_order: 16,
   },
   {
     id: "discover-ecommerse",
@@ -251,7 +287,7 @@ export const DEFAULT_PROJECTS = [
     tech: ["JavaScript", "Fetch API", "Local Storage"],
     github: "https://github.com/Kamoliddinmirzaboyev05/eCommerse-Big-JS-Project",
     live: "https://ecommerse-mkm.netlify.app/",
-    sort_order: 16,
+    sort_order: 17,
   },
 ];
 
