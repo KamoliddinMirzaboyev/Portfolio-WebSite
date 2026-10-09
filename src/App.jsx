@@ -32,12 +32,36 @@ function AppToaster() {
   );
 }
 
+function ScrollToHash() {
+  const { pathname, hash } = useLocation();
+
+  React.useEffect(() => {
+    if (!hash) {
+      if (pathname === "/") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+      return;
+    }
+    const id = hash.replace("#", "");
+    const timer = setTimeout(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [pathname, hash]);
+
+  return null;
+}
+
 function Shell() {
   const { pathname } = useLocation();
   const isAdmin = pathname.startsWith("/admin");
 
   return (
     <>
+      <ScrollToHash />
       {!isAdmin && <AnimatedBackground />}
       {!isAdmin && <Navbar />}
       <Routes>

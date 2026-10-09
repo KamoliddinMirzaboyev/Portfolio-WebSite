@@ -10,7 +10,7 @@ export const LINKEDIN_URL =
 
 /** SEO — Vercel domain yoki custom domain (.env da o'zgartiring) */
 export const SITE_URL = (
-  import.meta.env.VITE_SITE_URL || "https://kamoliddinmirzaboyev.vercel.app"
+  import.meta.env.VITE_SITE_URL || "https://webportfolio.uz"
 ).replace(/\/$/, "");
 export const SITE_NAME = "Kamoliddin Mirzaboyev";
 export const SITE_TITLE =
