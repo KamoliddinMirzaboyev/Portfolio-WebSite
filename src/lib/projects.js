@@ -62,7 +62,7 @@ export const DEFAULT_PROJECTS = [
     id: "qrmaker",
     slug: "qrmaker",
     name: "QR Maker — Onlayn Generator",
-    category: "react",
+    category: "startup",
     info: "Bepul va ko'p funksiyali QR kod generator: maxsus dizayn, brend logotiplari va yuqori sifatli eksport.",
     description:
       "QR Maker — istalgan turdagi ma'lumotlar uchun professional QR kodlar yaratuvchi zamonaviy veb-ilova.\n\nAsosiy imkoniyatlar:\n• URL, Wi-Fi, vCard, matn, ijtimoiy tarmoqlar formatlarini qo'llab-quvvatlash\n• Ranglar, gradientlar, ramkalar va maxsus shablonlar bilan brendlash\n• QR kod markaziga logotip joylashtirish\n• Yuqori aniqlikdagi vektor va rastr formatlarda (PNG, SVG, PDF) saqlab olish\n• Ro'yxatdan o'tmasdan bir zumda foydalanish.",
@@ -77,7 +77,7 @@ export const DEFAULT_PROJECTS = [
     id: "barakali-admin",
     slug: "barakali-admin",
     name: "Barakali Bozor — Admin CRM",
-    category: "api",
+    category: "startup",
     info: "Barakali Bozor savdo ekotizimini to'liq boshqarish, ombor qoldig'i va buyurtmalar tahlili uchun CRM tizimi.",
     description:
       "Barakali Bozor platformasining ma'murlar va menejerlar uchun mo'ljallangan yopiq boshqaruv CRM paneli.\n\nAsosiy imkoniyatlar:\n• Yangi buyurtmalarni real vaqt rejimida qabul qilish va holatini (status) boshqarish\n• Mahsulotlar katalogi, narxlar va qoldiqlarni tahrirlash\n• Yangi toifalar va aksiyalar yaratish\n• Xaridlar dinamikasi, daromad va mijozlar faolligi tahlili\n• PWA qo'llab-quvvatlovi va xavfsiz avtorizatsiya tizimi.",
@@ -122,7 +122,7 @@ export const DEFAULT_PROJECTS = [
     id: "greenshop",
     slug: "greenshop",
     name: "GreenShop",
-    category: "react",
+    category: "featured",
     info: "O'simliklar va tabiat mahsulotlari uchun maxsus online do'kon platformasi.",
     description:
       "GreenShop — uy o'simliklari, gullar va bog'dorchilik buyumlari savdosi uchun qulay filtrlar va savat tizimiga ega veb-ilova.",
@@ -137,7 +137,7 @@ export const DEFAULT_PROJECTS = [
     id: "finsweet",
     slug: "finsweet",
     name: "Finsweet",
-    category: "react",
+    category: "featured",
     info: "Ko'p sahifali korporativ biznes va agentlik veb-sayti.",
     description:
       "Finsweet — biznes tashkilotlari uchun zamonaviy UI/UX tamoyillari asosida ishlab chiqilgan ko'p sahifali rasmiy korporativ sayt.",
@@ -152,7 +152,7 @@ export const DEFAULT_PROJECTS = [
     id: "planto",
     slug: "planto",
     name: "Planto",
-    category: "react",
+    category: "featured",
     info: "Estetik dizayn va zamonaviy animatsiyalarga ega landing page.",
     description:
       "Planto — toza va vizual jozibador landing page loyihasi bo'lib, unikal soyalar va interaktiv elementlarga ega.",
@@ -167,7 +167,7 @@ export const DEFAULT_PROJECTS = [
     id: "devfinder",
     slug: "devfinder",
     name: "DevFinder",
-    category: "api",
+    category: "featured",
     info: "GitHub dasturchilar profillarini qidirish va statistikani ko'rish ilovasi.",
     description:
       "DevFinder — GitHub REST API orqali dasturchilar profillarini tezkor qidirish, ularning repozitoriyalari, obunachilari va faolligini ko'rsatuvchi interaktiv vosita.",
@@ -182,7 +182,7 @@ export const DEFAULT_PROJECTS = [
     id: "taqvim",
     slug: "taqvim",
     name: "Taqvim (Namoz Vaqtlari)",
-    category: "api",
+    category: "featured",
     info: "Hududlar bo'yicha aniq namoz vaqtlari va hijriy taqvim ilovasi.",
     description:
       "Taqvim — O'zbekiston hududlari bo'yicha real vaqt rejimida aniq namoz vaqtlari va kunlik tartibni hisoblab beruvchi qulay veb-dastur.",
@@ -197,7 +197,7 @@ export const DEFAULT_PROJECTS = [
     id: "image-generator",
     slug: "image-generator",
     name: "Image Generator",
-    category: "api",
+    category: "featured",
     info: "Unsplash API orqali yuqori sifatli rasmlarni qidirish va yuklab olish.",
     description:
       "Image Generator — Unsplash API integratsiyasi orqali turli mavzulardagi HD suratlarni qidirish va saqlash ilovasi.",

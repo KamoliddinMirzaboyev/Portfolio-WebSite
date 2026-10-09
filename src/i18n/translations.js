@@ -96,11 +96,9 @@ export const translations = {
       lead: "JoyBor, Avtomaktab va boshqa real frontend loyihalar.",
       loading: "Loyihalar yuklanmoqda…",
       empty: "Hali loyiha yo'q. Admin orqali qo'shing.",
-      all: "Barchasi",
+      all: "Hammasi",
       startup: "Startup",
-      featured: "Featured",
-      react: "React",
-      api: "API",
+      featured: "Tanlanganlar",
       static: "Static",
     },
     education: {
@@ -247,8 +245,6 @@ export const translations = {
       all: "All",
       startup: "Startup",
       featured: "Featured",
-      react: "React",
-      api: "API",
       static: "Static",
     },
     education: {
@@ -395,8 +391,6 @@ export const translations = {
       all: "Все",
       startup: "Startup",
       featured: "Featured",
-      react: "React",
-      api: "API",
       static: "Static",
     },
     education: {

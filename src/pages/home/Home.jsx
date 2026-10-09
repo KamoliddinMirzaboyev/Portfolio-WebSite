@@ -210,9 +210,11 @@ function Home() {
         (p) => String(p.category || "").trim().toLowerCase() === c
       )
     );
-    const valid = withProjects.length ? withProjects : all;
-    // Har doim "all" birinchi tab bo'lib turadi
-    return ["all", ...valid.filter((c) => c !== "all")];
+    // Har doim "all" birinchi tab ("Hammasi"), "react" va "api" butunlay chiqarib tashlanadi
+    const cleanCategories = valid.filter(
+      (c) => c !== "all" && c !== "react" && c !== "api"
+    );
+    return ["all", ...cleanCategories];
   }, [portfolioDB]);
 
   useEffect(() => {
@@ -223,7 +225,7 @@ function Home() {
   }, [categoryTabs, value]);
 
   const categoryLabel = (cat) => {
-    if (cat === "all") return t.portfolio?.all || "Barchasi";
+    if (cat === "all") return t.portfolio?.all || "Hammasi";
     const labels = t.portfolio || {};
     if (labels[cat]) return labels[cat];
     return cat

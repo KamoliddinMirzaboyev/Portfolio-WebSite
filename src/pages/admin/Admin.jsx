@@ -75,7 +75,7 @@ const EMPTY_BLOG = {
   sort_order: 0,
 };
 
-const DEFAULT_CATEGORIES = ["featured", "react", "api", "static"];
+const DEFAULT_CATEGORIES = ["featured", "startup", "static"];
 const CATEGORIES_STORAGE_KEY = "portfolio_project_categories";
 const LOCAL_ADMIN_KEY = "portfolio_admin_ok";
 
