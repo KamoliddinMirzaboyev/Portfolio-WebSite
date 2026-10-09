@@ -211,7 +211,7 @@ function Home() {
       )
     );
     // Har doim "all" birinchi tab ("Hammasi"), "react" va "api" butunlay chiqarib tashlanadi
-    const cleanCategories = valid.filter(
+    const cleanCategories = withProjects.filter(
       (c) => c !== "all" && c !== "react" && c !== "api"
     );
     return ["all", ...cleanCategories];
