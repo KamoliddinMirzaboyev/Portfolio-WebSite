@@ -819,7 +819,8 @@ html[data-theme="light"] .admin-btn.ghost:hover {
   max-width: 240px;
   max-height: 150px;
   width: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.35);
   border-radius: 10px;
   border: 1px solid var(--admin-line);
 }

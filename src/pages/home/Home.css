@@ -743,14 +743,17 @@ html[data-theme="dark"] .skillIcon {
   width: 100%;
   position: relative;
   aspect-ratio: 16 / 10;
-  background: var(--media-bg);
+  background: rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .portfolioBox .projectImg img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   /* zoom/scale yo‘q — likkillash sababi */
   transform: none;
@@ -760,7 +763,7 @@ html[data-theme="dark"] .skillIcon {
 
 .portfolioBox:hover .projectImg img {
   transform: none;
-  opacity: 0.92;
+  opacity: 0.95;
 }
 
 .img-shine {

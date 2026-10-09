@@ -1,7 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LuArrowLeft, LuExternalLink, LuGithub } from "react-icons/lu";
+import {
+  LuArrowLeft,
+  LuExternalLink,
+  LuGithub,
+  LuMaximize2,
+  LuX,
+  LuChevronLeft,
+  LuChevronRight,
+} from "react-icons/lu";
 import {
   fetchProjectBySlugOrId,
   youtubeEmbedUrl,
@@ -23,6 +31,7 @@ function ProjectDetail() {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeImg, setActiveImg] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -42,24 +51,48 @@ function ProjectDetail() {
 
   const gallery = useMemo(() => {
     if (!project) return [];
-    const g = project.gallery?.length
-      ? project.gallery
-      : project.img
-        ? [project.img]
-        : [];
-    return g.filter(Boolean);
+    if (project.gallery && project.gallery.length > 0) {
+      return project.gallery.filter(Boolean);
+    }
+    if (project.img) return [project.img];
+    return [];
   }, [project]);
 
-  const embed = project ? youtubeEmbedUrl(project.youtube_url) : "";
-  const paragraphs = (project?.description || project?.info || "")
-    .split(/\n\n+/)
-    .map((x) => x.trim())
-    .filter(Boolean);
+  useEffect(() => {
+    if (!isLightboxOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setIsLightboxOpen(false);
+      } else if (e.key === "ArrowLeft" && gallery.length > 1) {
+        setActiveImg((prev) => (prev > 0 ? prev - 1 : gallery.length - 1));
+      } else if (e.key === "ArrowRight" && gallery.length > 1) {
+        setActiveImg((prev) => (prev < gallery.length - 1 ? prev + 1 : 0));
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isLightboxOpen, gallery.length]);
+
+  const embed = useMemo(() => {
+    return project?.youtube ? youtubeEmbedUrl(project.youtube) : null;
+  }, [project?.youtube]);
+
+  const paragraphs = useMemo(() => {
+    if (!project?.description) return [];
+    return project.description
+      .split(/\n\n+/)
+      .map((b) => b.trim())
+      .filter(Boolean);
+  }, [project?.description]);
 
   if (loading) {
     return (
       <div className="projectPage">
-        <Seo title="Loyiha" path={`/project/${slug || ""}`} noindex />
         <div className="container project-layout">
           <DetailSkeleton />
         </div>
@@ -70,12 +103,13 @@ function ProjectDetail() {
   if (!project) {
     return (
       <div className="projectPage">
-        <Seo title="Loyiha topilmadi" path={`/project/${slug || ""}`} noindex />
-        <div className="container">
-          <p className="project-empty">{p.notFound}</p>
+        <div className="container project-layout">
           <Link to="/#portfolio" className="project-back">
             <LuArrowLeft /> {p.back}
           </Link>
+          <div className="project-empty">
+            <h2>{p.notFound}</h2>
+          </div>
         </div>
       </div>
     );
@@ -139,11 +173,27 @@ function ProjectDetail() {
           {gallery.length > 0 && (
             <Glass className="lg-portfolio project-gallery-wrap" borderRadius={22}>
               <div className="project-gallery">
-                <div className="project-gallery-main">
+                <div
+                  className="project-gallery-main"
+                  onClick={() => setIsLightboxOpen(true)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setIsLightboxOpen(true);
+                    }
+                  }}
+                  title="Rasmni to'liq hajmda ochish (kattalashtirish)"
+                >
                   <img
                     src={gallery[activeImg] || gallery[0]}
                     alt={project.name}
                   />
+                  <div className="project-gallery-zoom-badge">
+                    <LuMaximize2 />
+                    <span>To'liq ko'rish</span>
+                  </div>
                 </div>
                 {gallery.length > 1 && (
                   <div className="project-thumbs">
@@ -155,6 +205,7 @@ function ProjectDetail() {
                           i === activeImg ? "active" : ""
                         }`}
                         onClick={() => setActiveImg(i)}
+                        title={`Rasm ${i + 1}`}
                       >
                         <img src={src} alt="" />
                       </button>
@@ -238,6 +289,84 @@ function ProjectDetail() {
           </div>
         </motion.div>
       </div>
+
+      {/* Fullscreen Lightbox Modal */}
+      {isLightboxOpen && (
+        <div
+          className="lightbox-overlay"
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          <div
+            className="lightbox-header"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="lightbox-counter">
+              {activeImg + 1} / {gallery.length}
+            </div>
+            <div className="lightbox-actions">
+              <a
+                href={gallery[activeImg] || gallery[0]}
+                target="_blank"
+                rel="noreferrer"
+                className="lightbox-btn"
+                title="Asl faylni yangi oynada ochish"
+              >
+                <LuExternalLink /> Asl hajm
+              </a>
+              <button
+                type="button"
+                className="lightbox-btn lightbox-close"
+                onClick={() => setIsLightboxOpen(false)}
+                title="Yopish (Esc)"
+              >
+                <LuX />
+              </button>
+            </div>
+          </div>
+
+          {gallery.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="lightbox-nav prev"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImg((prev) =>
+                    prev > 0 ? prev - 1 : gallery.length - 1
+                  );
+                }}
+                title="Oldingi rasm"
+              >
+                <LuChevronLeft />
+              </button>
+              <button
+                type="button"
+                className="lightbox-nav next"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setActiveImg((prev) =>
+                    prev < gallery.length - 1 ? prev + 1 : 0
+                  );
+                }}
+                title="Keyingi rasm"
+              >
+                <LuChevronRight />
+              </button>
+            </>
+          )}
+
+          <div
+            className="lightbox-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={gallery[activeImg] || gallery[0]}
+              alt={project.name}
+              className="lightbox-img"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
